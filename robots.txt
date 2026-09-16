@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://suanzhun.cauai.fun/sitemap.xml

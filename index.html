@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>算的准 · 前事验证 · 在线排盘</title>
+<style>
+/* Hallmark · genre: editorial · macrostructure: Long Document · design-system: DESIGN.md */
+:root{
+  --bg:oklch(98% .018 355); --bg2:oklch(94% .035 350); --card:oklch(100% .005 350 / .82); --card2:oklch(96% .025 350 / .72);
+  --line:oklch(86% .055 350); --gold:oklch(68% .12 20); --gold2:oklch(50% .15 350); --txt:oklch(28% .035 345);
+  --dim:oklch(48% .045 345); --dim2:oklch(68% .035 345); --red:oklch(62% .14 350); --grn:oklch(60% .09 165);
+}
+*{box-sizing:border-box}html{overflow-x:clip}
+body{margin:0;background:radial-gradient(900px 480px at 12% -12%,oklch(92% .06 350 / .75) 0%,transparent 68%),radial-gradient(700px 420px at 100% 8%,oklch(95% .05 45 / .55) 0%,transparent 70%),var(--bg);
+  color:var(--txt);font:15px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:44px 20px 70px}
+.hero{text-align:center;padding:22px 0 8px;animation:fadeUp .65s cubic-bezier(.16,1,.3,1) both}
+.hero h1{margin:0;font-size:34px;letter-spacing:.22em;color:var(--gold2);font-weight:600;text-shadow:0 8px 24px oklch(50% .15 350 / .12)}
+.hero .sub{margin-top:12px;color:var(--dim);font-size:14px;letter-spacing:.14em}
+.rule{width:78px;height:2px;margin:22px auto 0;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.lead{margin:30px 0 8px;text-align:center;color:var(--dim);font-size:15px;line-height:2}
+.lead b{color:var(--gold2);font-weight:600}
+.btn{display:block;max-width:330px;margin:26px auto 0;padding:15px 0;text-align:center;
+  background:var(--gold2);color:oklch(99% .01 355);border-radius:999px;
+  font-size:17px;font-weight:700;letter-spacing:.16em;text-decoration:none;
+  box-shadow:0 10px 26px oklch(50% .15 350 / .18);transition:transform .22s,box-shadow .22s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 14px 30px oklch(50% .15 350 / .22)}.btn:active{transform:translateY(1px)}
+.btn:focus-visible{outline:3px solid oklch(68% .12 20);outline-offset:3px}.btn.ghost{background:transparent;color:var(--gold2);border:1px solid var(--line);box-shadow:none;font-weight:500}
+.card{margin-top:30px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 22px 24px;box-shadow:0 12px 34px oklch(50% .05 350 / .08);backdrop-filter:blur(8px);animation:fadeUp .65s cubic-bezier(.16,1,.3,1) both;animation-delay:.08s}
+.card h2{margin:0 0 16px;font-size:17px;color:var(--gold2);letter-spacing:.14em;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(max-width:640px){.grid{grid-template-columns:1fr}.hero h1{font-size:26px;letter-spacing:.16em}}
+.item{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:13px 15px;transition:transform .2s,box-shadow .2s}.item:hover{transform:translateY(-2px);box-shadow:0 10px 24px oklch(50% .05 350 / .12)}
+.item .t{color:var(--gold2);font-size:14px;letter-spacing:.06em}
+.item .d{color:var(--dim);font-size:13px;margin-top:5px;line-height:1.7}
+.price{display:flex;justify-content:space-between;align-items:center;gap:14px;
+  padding:13px 15px;background:var(--card2);border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
+.price .n{color:var(--dim);font-size:14px}
+.price .n small{display:block;color:var(--dim2);font-size:12px;margin-top:3px}
+.price .v{color:var(--gold2);font-size:20px;font-weight:700;white-space:nowrap}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+.price.hot{border-color:#4a3f22;background:linear-gradient(180deg,#221d12,var(--card2))}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0}
+.steps li{counter-increment:s;position:relative;padding:0 0 14px 34px;color:var(--dim);font-size:14px}
+.steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:22px;height:22px;
+  border:1px solid var(--gold);color:var(--gold2);border-radius:50%;font-size:12px;
+  display:flex;align-items:center;justify-content:center}
+.steps li b{color:var(--txt);font-weight:600}
+.note{margin-top:12px;color:var(--dim2);font-size:12.5px;line-height:1.9}
+.warn{border-left:3px solid var(--gold);padding:2px 0 2px 14px;color:var(--dim);font-size:13px;margin-top:8px}
+.footer{text-align:center;color:var(--dim2);font-size:11.5px;margin-top:36px;letter-spacing:.1em;line-height:2}
+.k{color:var(--gold2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>算的准</h1>
+    <div class="sub">八字 · 真太阳时 · 大运流年 · 八宅命卦 · 姓名五格</div>
+    <div class="rule"></div>
+  </div>
+
+  <div class="lead">
+    先看<span class="k">已经发生的事</span>，再谈以后。<br>
+    前事验不准，<b>不收钱</b>。
+  </div>
+
+  <a class="btn" href="paipan.html">免费在线排盘 →</a>
+  <a class="btn ghost" href="#price">看服务与价格</a>
+
+  <div class="card">
+    <h2>这个工具能算什么</h2>
+    <div class="grid">
+      <div class="item"><div class="t">四柱八字</div><div class="d">按出生地经度换算真太阳时，年月日时四柱、藏干、十神、旬空</div></div>
+      <div class="item"><div class="t">五行旺衰与用神</div><div class="d">藏干加权算力量，给出日主强弱、用神与忌神方向</div></div>
+      <div class="item"><div class="t">大运与流年</div><div class="d">起运岁数、十步大运、逐年前瞻，按用神喜忌评分</div></div>
+      <div class="item"><div class="t">八宅命卦风水</div><div class="d">三元命卦、东四命西四命、八方位吉凶与用途建议</div></div>
+      <div class="item"><div class="t">姓名五格</div><div class="d">康熙笔画、五格数理、三才配置与可选改名方向</div></div>
+      <div class="item"><div class="t">合婚</div><div class="d">双方八字对照，给关系结构与相处要点</div></div>
+    </div>
+    <div class="note">工具算的是结构，人算的是判断。同样的盘，不同流派的取法会有差异，本工具会标明取法。</div>
+  </div>
+
+  <div class="card" id="price">
+    <h2>服务与价格</h2>
+    <div class="price">
+      <div class="n">前事验证<small>先算过去，对了再往下谈</small></div>
+      <div class="v">¥9.9</div>
+    </div>
+    <div class="price">
+      <div class="n">单项分析<small>事业 / 婚姻 / 财运 任选一项</small></div>
+      <div class="v">¥98</div>
+    </div>
+    <div class="price hot">
+      <div class="n">全盘详批<small>八字 + 大运流年 + 命卦 + 姓名，主推</small></div>
+      <div class="v">¥298</div>
+    </div>
+    <div class="price">
+      <div class="n">合婚定级<small>双方对照，关系结构与发展节奏</small></div>
+      <div class="v">¥498</div>
+    </div>
+    <div class="price">
+      <div class="n">年度运势<small>单年逐月提示与关键节点</small></div>
+      <div class="v">¥198</div>
+    </div>
+    <div class="price">
+      <div class="n">风水布局<small>命卦方位 + 房间用途建议</small></div>
+      <div class="v">¥398</div>
+    </div>
+    <div class="warn">退款红线：前事验证命中率低于 50%，全额退款，不问理由。</div>
+  </div>
+
+  <div class="card">
+    <h2>怎么进行</h2>
+    <ol class="steps">
+      <li><b>填信息</b>：姓名、出生年月日时、出生地，尽量精确到分钟</li>
+      <li><b>先验前事</b>：我列出几条已发生的关键事实，你判断准不准</li>
+      <li><b>确认再往下</b>：验准了继续，验不准这单不收钱</li>
+      <li><b>拿报告</b>：逐条给你结论，附推导依据，能核验、能追问</li>
+    </ol>
+    <div class="note">需要补充的信息（比如具体想看的年份、纠结的选项）可以在第 1 步一起说。</div>
+  </div>
+
+  <div class="card">
+    <h2>联系方式</h2>
+    <div class="note" style="font-size:14px;color:var(--dim)">
+      微信：<span class="k">ANS_0912</span>
+    </div>
+    <div class="note">加好友请说明来意（例如「前事验证」），我看到会回。</div>
+  </div>
+
+  <div class="footer">
+    本页为传统命理文化推演工具，结果仅供文化参考与自我反思<br>
+    不构成医疗、法律、投资建议；健康问题请以执业医师意见为准
+  </div>
+
+</div>
+</body>
+</html>
