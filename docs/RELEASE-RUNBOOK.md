@@ -15,7 +15,7 @@ npm run deploy                # 正式发布
 脚本按顺序做五件事：
 
 1. 跑 `npm run release:check`（lint + 结构契约 + 回归测试），不通过就中止。
-2. 计算 11 个上线文件的本地 sha256，并读取线上同名文件的 sha256。
+2. 计算 13 个上线文件的本地 sha256，并读取线上同名文件的 sha256。
 3. 只对哈希不同的文件执行上传；线上缺失的文件也计入差异。
 4. 上传前在远端创建 `/srv/suanzhun/backups/<时间戳>` 全量备份。
 5. 上传后重新比对哈希，并逐个请求线上地址确认返回 200。
@@ -40,7 +40,7 @@ npm run deploy                # 正式发布
 
 ## 上线文件清单
 
-`index.html`、`paipan.html`、`404.html`、`app.js`、`analysis.js`、`bazi.js`、`favicon.svg`、`apple-touch-icon.png`、`og-image.png`、`robots.txt`、`sitemap.xml`。
+`index.html`、`paipan.html`、`404.html`、`assets/tokens.css`、`assets/site.css`、`app.js`、`analysis.js`、`bazi.js`、`favicon.svg`、`apple-touch-icon.png`、`og-image.png`、`robots.txt`、`sitemap.xml`。
 
 这些文件与 `scripts/deploy.mjs` 中的 `FILES` 常量一一对应；新增上线文件必须同时改这里和脚本，否则不会被发布。
 
@@ -235,3 +235,17 @@ cp -a /srv/suanzhun/backups/<时间戳>/. /srv/suanzhun/public/
 | 发布后   | 12 个地址全部 200 且逐字带新 CSP；320/375/414/768/1280 五档宽度横向溢出均为 0；排盘跑通 12 块卡片          |
 | 复核     | 真实浏览器 0 CSP 违规、0 控制台报错；线上仅存的两个 404 来自刻意访问的不存在路径                           |
 | 踩坑     | 首次上传失败：远端 `assets/` 目录不存在，`scp` 不会自动建目录。`scripts/deploy.mjs` 已补 `mkdir -p` 后再传 |
+
+### 2026-09-18 0.10.1 文档与代码对齐
+
+核对文档时发现两处「硬数字」已与代码不符：README 写 23 项契约（实际 38 项），
+Runbook 写 11 个上线文件（实际 13 个，且清单漏了两个样式表）。本轮修正文档，
+并新增闸门把文档声称的数字与代码真实数字锁死，防止再次漂移。
+
+| 项目     | 值                                                                                       |
+| -------- | ---------------------------------------------------------------------------------------- |
+| 备份     | 无（仅文档、验证脚本与版本号变更，不改线上文件）                                          |
+| 变更文件 | 无上线文件变化；`scripts/verify.mjs` 新增 3 项契约                                        |
+| 改动     | README 契约数改为 41；Runbook 上线文件数改为 13 并补全清单；新增 ADR 0008                 |
+| 发布前   | `npm run release:check` 通过：lint + 格式 + 密钥扫描 51 文件 + 41 项契约 + 对比度 + 45 测试 |
+| 反向验证 | README 改回 23、Runbook 改回 11 时，验证脚本均以非零码退出并点名对应检查项                |
