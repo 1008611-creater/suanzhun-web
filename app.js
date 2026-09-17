@@ -8,13 +8,20 @@
   var GAN = B.GAN,
     ZHI = B.ZHI,
     CANG = B.CANG;
-  /* 五行配色统一走设计令牌，避免结果区散落内联色值 */
+  /* 五行配色统一走设计令牌：填充用原色，文字用对浅底达标的 -ink 版本 */
   var WX_COLOR = {
     木: 'var(--wx-mu)',
     火: 'var(--wx-huo)',
     土: 'var(--wx-tu)',
     金: 'var(--wx-jin)',
     水: 'var(--wx-shui)',
+  };
+  var WX_INK = {
+    木: 'var(--wx-mu-ink)',
+    火: 'var(--wx-huo-ink)',
+    土: 'var(--wx-tu-ink)',
+    金: 'var(--wx-jin-ink)',
+    水: 'var(--wx-shui-ink)',
   };
   var WX_SOFT = {
     木: 'var(--wx-mu-soft)',
@@ -87,9 +94,9 @@
     return d;
   }
   function jClass(ji) {
-    if (ji === '大吉' || ji === '吉') return 'j';
+    if (ji === '大吉' || ji === '吉' || ji === '小吉') return 'j';
     if (ji === '大凶') return 'dx';
-    if (ji === '凶') return 'x';
+    if (ji === '凶' || ji === '偏凶') return 'x';
     return '';
   }
   function pad(n) {
@@ -259,13 +266,13 @@
       var isYong = ws.yong.indexOf(w) >= 0;
       var isJi = ws.ji.indexOf(w) >= 0;
       var mark = isYong
-        ? ' <span style="color:var(--jade);font-size:11px">用</span>'
+        ? ' <span style="color:var(--jade-ink);font-size:11px">用</span>'
         : isJi
-          ? ' <span style="color:var(--xiong);font-size:11px">忌</span>'
+          ? ' <span style="color:var(--xiong-ink);font-size:11px">忌</span>'
           : '';
       wbox.innerHTML +=
         '<div class="wxrow"><div class="wxname" style="color:' +
-        WX_COLOR[w] +
+        WX_INK[w] +
         '">' +
         w +
         mark +
@@ -507,7 +514,7 @@
           k +
           '</div>' +
           '<div class="num" style="color:' +
-          (d5.ji === '吉' ? 'var(--jade)' : 'var(--xiong)') +
+          (d5.ji === '吉' ? 'var(--jade-on-dark)' : 'var(--xiong-on-dark)') +
           '">' +
           d5.num +
           '</div>' +

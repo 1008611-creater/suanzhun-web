@@ -19,4 +19,5 @@ jobs:
       - run: npm run format:check
       - run: npm run secret-scan
       - run: npm run check
+      - run: npm run contrast
       - run: npm test

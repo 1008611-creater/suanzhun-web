@@ -24,16 +24,17 @@ README.md
 
 ## 文档清单
 
-| 文件                                     | 作用                                                 |
-| ---------------------------------------- | ---------------------------------------------------- |
-| `PRD.md`                                 | 产品定位、用户路径、1.0 范围与验收标准               |
-| `TECHNICAL-DESIGN.md`                    | 工作栈选择、视觉系统与工程规则                       |
-| `DESIGN.md`                              | 设计令牌、排版、间距、动效与无障碍约定（仓库根目录） |
-| `RELEASE-RUNBOOK.md`                     | 发布、参数、人工确认与回滚，含发布记录               |
-| `IMPECCABLE-AUDIT.md`                    | 前端质量审计记录                                     |
-| `adr/0001-cache-headers-single-owner.md` | 缓存响应头只允许一个归属                             |
-| `adr/0002-secret-scan-before-push.md`    | 推送前必须通过密钥扫描                               |
-| `adr/README.md`                          | ADR 编号与只增不改约定                               |
+| 文件                                         | 作用                                                 |
+| -------------------------------------------- | ---------------------------------------------------- |
+| `PRD.md`                                     | 产品定位、用户路径、1.0 范围与验收标准               |
+| `TECHNICAL-DESIGN.md`                        | 工作栈选择、视觉系统与工程规则                       |
+| `DESIGN.md`                                  | 设计令牌、排版、间距、动效与无障碍约定（仓库根目录） |
+| `RELEASE-RUNBOOK.md`                         | 发布、参数、人工确认与回滚，含发布记录               |
+| `IMPECCABLE-AUDIT.md`                        | 前端质量审计记录                                     |
+| `adr/0001-cache-headers-single-owner.md`     | 缓存响应头只允许一个归属                             |
+| `adr/0002-secret-scan-before-push.md`        | 推送前必须通过密钥扫描                               |
+| `adr/0003-result-contrast-token-contract.md` | 结果页文字对比度由令牌契约锁定                       |
+| `adr/README.md`                              | ADR 编号与只增不改约定                               |
 
 ## 权威来源（不要重复维护）
 

@@ -2,7 +2,7 @@
 
 export default [
   {
-    ignores: ['node_modules/**', 'backups/**'],
+    ignores: ['node_modules/**', 'backups/**', '.tmp-shots/**'],
   },
   js.configs.recommended,
   {
