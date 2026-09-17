@@ -27,6 +27,8 @@ const FILES = [
   'index.html',
   'paipan.html',
   '404.html',
+  'assets/tokens.css',
+  'assets/site.css',
   'app.js',
   'analysis.js',
   'bazi.js',
@@ -39,6 +41,8 @@ const FILES = [
 const URLS = [
   '/',
   '/paipan.html',
+  '/assets/tokens.css',
+  '/assets/site.css',
   '/app.js',
   '/analysis.js',
   '/bazi.js',
@@ -197,6 +201,13 @@ async function main() {
     console.log('  备份到 ' + backupDir);
 
     step('上传差异文件');
+    // 远端目录可能不存在（新增 assets/ 这类子目录时），scp 不会自动建目录。
+    const remoteDirs = [...new Set(changed.map((f) => (f.includes('/') ? f.slice(0, f.lastIndexOf('/')) : '')))].filter(
+      Boolean
+    );
+    if (remoteDirs.length) {
+      ssh(['set -e', ...remoteDirs.map((d) => 'mkdir -p ' + REMOTE_DIR + '/' + d)].join(LF), '创建远端目录');
+    }
     for (const file of changed) {
       mustRun('scp', [...SSH_OPTS, resolve(root, file), HOST + ':' + REMOTE_DIR + '/' + file], '上传 ' + file);
       console.log('  已上传 ' + file);

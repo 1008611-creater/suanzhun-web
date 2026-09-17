@@ -33,12 +33,14 @@ function cacheControl(pathname) {
 
 /**
  * 站点没有任何内联脚本、eval、iframe、表单或外部资源，所以脚本可以完全禁掉内联。
- * 样式仍有 <style> 块与 style 属性，因此 style-src 保留 'unsafe-inline'。
+ * 样式已全部搬到 assets/ 下的外部样式表，页面里不再有 <style> 块或 style 属性，
+ * 因此 style-src 也能去掉 'unsafe-inline'。运行时的 CSSOM 赋值（如 .style.width）
+ * 不受 style-src 约束，仍然可用。
  * 这份策略必须与 deploy/nginx.conf 中的字符串逐字一致，测试会锁死，避免两边漂移。
  */
 export const CSP =
   "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; " +
-  "object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+  "object-src 'none'; script-src 'self'; style-src 'self'; " +
   "img-src 'self'; font-src 'self'; connect-src 'none'; manifest-src 'self'; " +
   'upgrade-insecure-requests';
 

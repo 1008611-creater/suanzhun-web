@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.10.0 - 2026-09-18
+
+### 从「能算」到「像个产品」
+
+0.9.0 的结果页已经能给出行动建议，但视觉与工程底子还是模板级：三个页面各自带一块 `<style>`，
+`app.js` 用内联 `style="..."` 拼色值，改一次配色要在三个文件里对齐。这一版把样式和令牌收成单点归属，
+并补上真正的产品级排版与空状态。
+
+- **令牌单归属。** 新增 `assets/tokens.css`，`:root` 变量全部集中于此；三个页面只通过 `<link>` 引用。
+- **组件样式单归属。** 新增 `assets/site.css`，布局、组件、动效、打印样式与空状态集中一处；
+  页面里不再出现 `<style>` 块或 `style="..."` 属性。
+- **CSP 收紧。** `style-src` 从 `'self' 'unsafe-inline'` 收到 `'self'`，
+  `scripts/serve.mjs` 与 `deploy/nginx.conf` 逐字一致。
+- **首页重做。** 能力清单改为编号账簿（`ledger`），服务与价格改为清单式 `price-list`，
+  步骤与联系方式走开放式版式，不再堆卡片。
+- **排盘页重做。** 改为「输入轨 + 报告画布」工作台结构；新增待排盘空状态，
+  宽屏右侧不再是一块空白，先讲清楚会产出哪六块内容。
+- **动效与纹理。** 首屏分层 reveal、卡片 hover、粉雾渐变与 grain 纹理；
+  全部走 CSS，且 `prefers-reduced-motion` 下退化为透明度过渡。
+
+### 工程与质量
+
+- `scripts/verify.mjs` 新增契约：页面无内联样式、页面外链 tokens 与 site、`tokens.css` 定义 `:root`、
+  存在 `prefers-reduced-motion` 分支；required 清单加入两个样式文件。
+- `scripts/check-contrast.mjs` 改为只从 `assets/tokens.css` 读令牌，浅底文字色禁令改查 `assets/site.css`。
+- `scripts/deploy.mjs` 的 `FILES` / `URLS` 加入两个样式文件，线上探活覆盖新资源。
+- 真实浏览器多宽度复核：320 / 375 / 414 / 768 / 1280 下首页、排盘页、404 页横向溢出均为 0；
+  排盘跑通 12 块结果卡片，控制台无报错。
+
+### 文档
+
+- 新增 `docs/adr/0007-design-tokens-and-inline-style-ban.md`。
+- `DESIGN.md` 增加 Ownership 一节，写明令牌与组件样式的唯一归属。
+
 ## 0.9.0 - 2026-09-18
 
 ### 从「结构描述」到「行动建议」

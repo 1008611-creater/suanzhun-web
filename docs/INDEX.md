@@ -37,6 +37,7 @@ README.md
 | `adr/0004-csp-single-owner-and-input-escaping.md` | CSP 单归属与用户输入转义                             |
 | `adr/0005-liunian-window-and-result-next-step.md` | 流年窗口跟随当前年份与结果页转化收尾                 |
 | `adr/0006-action-advice-engine.md`                | 行动建议引擎：事业、婚姻、八宅落地与姓名优选         |
+| `adr/0007-design-tokens-and-inline-style-ban.md`  | 设计令牌单归属、外链样式与内联样式禁令               |
 | `adr/README.md`                                   | ADR 编号与只增不改约定                               |
 
 ## 权威来源（不要重复维护）

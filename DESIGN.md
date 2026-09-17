@@ -53,3 +53,10 @@ editorial / almanac-workbench
 - Root overflow clipped, no horizontal scrolling.
 - Inputs always have visible labels.
 - Touch targets >=44px.
+
+## Ownership
+
+- Tokens: `assets/tokens.css` is the only `:root` source. Pages link it; nothing inlines values.
+- Components: `assets/site.css` is the only place for layout, components, motion, print and empty states.
+- No page may ship a `<style>` block or a `style="..."` attribute; `app.js` toggles class names only.
+- CSP is `style-src 'self'`; see `docs/adr/0007-design-tokens-and-inline-style-ban.md`.

@@ -1,0 +1,78 @@
+/* Hallmark · macrostructure: Workbench + Long Document · tone: editorial-almanac · anchor hue: 350 (rose) · design-system: DESIGN.md
+ * theme: custom (vibe: "rose paper almanac, seal-berry ink" · paper oklch(98% .018 355) · accent oklch(50% .15 350) rose-berry · Songti SC + PingFang SC)
+ * token-owner: assets/tokens.css — 全站唯一令牌来源，三个页面与脚本都从这里取值
+ */
+:root {
+  /* 纸面与卡片：对比度契约按 --bg / --card / --card2 的最坏叠加值校验，改值即触发 check-contrast */
+  --bg: oklch(98% 0.018 355);
+  --bg-deep: oklch(94% 0.035 350);
+  --card: oklch(100% 0.005 350 / 0.84);
+  --card2: oklch(96% 0.025 350 / 0.74);
+  --line: oklch(86% 0.055 350);
+  --line-soft: oklch(91% 0.042 350);
+  /* 浅底文字色：对实际卡片底色实测 >= 4.5:1（大字号 >= 3:1） */
+  --ink: oklch(28% 0.035 345);
+  --txt: oklch(28% 0.035 345);
+  --dim: oklch(48% 0.045 345);
+  --dim2: oklch(51% 0.035 345);
+  --gold-ink: oklch(52% 0.12 20);
+  --jade-ink: oklch(49.4% 0.09 165);
+  --xiong-ink: oklch(52.2% 0.14 25);
+  --xiong-strong-ink: oklch(44% 0.16 25);
+  /* 深色芯片文字色：对 #0f131b 与热点底色双重验证 >= 4.5:1 */
+  --ink-on-dark: oklch(87% 0.012 345);
+  --dim-on-dark: oklch(64% 0.045 345);
+  --jade-on-dark: oklch(62.2% 0.09 165);
+  --xiong-on-dark: oklch(64.9% 0.14 25);
+  --xiong-strong-on-dark: oklch(72% 0.16 25);
+  --gold-on-dark: oklch(70% 0.12 20);
+  /* 品牌原色：只允许做填充、描边、装饰，禁止直接当浅底文字色（用 -ink 版本） */
+  --gold: oklch(68% 0.12 20);
+  --gold2: oklch(50% 0.15 350);
+  --jade: oklch(60% 0.09 165);
+  --berry: oklch(50% 0.15 350);
+  --berry-deep: oklch(40% 0.13 350);
+  --focus: oklch(55% 0.16 350);
+  --btn-ink: oklch(99% 0.01 355);
+  --panel: #0f131b;
+  --panel-hot: #301513;
+  /* 五行：填充用原色，文字用 -ink，深底用 -on-dark */
+  --wx-mu: #4caf7d;
+  --wx-huo: #e0605c;
+  --wx-tu: #c8a45c;
+  --wx-jin: #c3c8d8;
+  --wx-shui: #5a93dd;
+  --wx-mu-ink: oklch(49.3% 0.1 165);
+  --wx-huo-ink: oklch(52.3% 0.15 25);
+  --wx-tu-ink: oklch(50.7% 0.09 85);
+  --wx-jin-ink: oklch(50.6% 0.03 265);
+  --wx-shui-ink: oklch(50.6% 0.1 255);
+  --wx-mu-soft: rgba(76, 175, 125, 0.4);
+  --wx-huo-soft: rgba(224, 96, 92, 0.4);
+  --wx-tu-soft: rgba(200, 164, 92, 0.4);
+  --wx-jin-soft: rgba(195, 200, 216, 0.4);
+  --wx-shui-soft: rgba(90, 147, 221, 0.4);
+  /* 排版：标题用宋体（roman，不用斜体），正文用黑体，数据用等宽 */
+  --font-display: 'Songti SC', 'Noto Serif SC', 'Source Han Serif SC', STSong, serif;
+  --font-body: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* 4pt 间距刻度 */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 72px;
+  --s-9: 112px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --d-fast: 160ms;
+  --d-base: 220ms;
+  --d-slow: 680ms;
+}
