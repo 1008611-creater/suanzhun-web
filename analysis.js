@@ -711,6 +711,503 @@
     return Math.round(x * m) / m;
   }
 
+  /* ---------- 7. 十神力量（含藏干加权） ---------- */
+  // 与 bazi.js 的十神口径一致：同五行比劫、我生食伤、我克财、克我官杀、生我印。
+  function shiShenOf(dayGanIdx, otherIdx, GAN_WX, GAN_YY) {
+    var dw = GAN_WX[dayGanIdx],
+      ow = GAN_WX[otherIdx];
+    var same = GAN_YY[dayGanIdx] === GAN_YY[otherIdx];
+    if (ow === dw) return same ? '比肩' : '劫财';
+    if (SHENG[dw] === ow) return same ? '食神' : '伤官';
+    if (KE[dw] === ow) return same ? '偏财' : '正财';
+    if (BEI_KE[dw] === ow) return same ? '七杀' : '正官';
+    if (BEI_SHENG[dw] === ow) return same ? '偏印' : '正印';
+    return '';
+  }
+  var SS_GROUP = {
+    比肩: '比劫',
+    劫财: '比劫',
+    食神: '食伤',
+    伤官: '食伤',
+    正财: '财',
+    偏财: '财',
+    正官: '官杀',
+    七杀: '官杀',
+    正印: '印',
+    偏印: '印',
+  };
+  /**
+   * 十神力量：把 p.wx.detail 里每个天干与藏干的权重按十神分组累加。
+   * detail 由 bazi.js 产出，已含藏干按本气/中气/余气的 0.6/0.28/0.12 权重。
+   */
+  function shiShenPower(p) {
+    var meta = p.meta || {};
+    var GAN = meta.GAN || [],
+      GAN_WX_ = meta.GAN_WX || GAN_WX,
+      GAN_YY = meta.GAN_YY || [];
+    var out = { 比劫: 0, 食伤: 0, 财: 0, 官杀: 0, 印: 0 };
+    (p.wx.detail || []).forEach(function (d) {
+      var gi = GAN.indexOf(d.gan);
+      if (gi < 0) return;
+      var ss = shiShenOf(p.dayGan, gi, GAN_WX_, GAN_YY);
+      var g = SS_GROUP[ss];
+      if (g) out[g] += d.w;
+    });
+    var total = 0;
+    Object.keys(out).forEach(function (k) {
+      total += out[k];
+    });
+    var pct = {};
+    Object.keys(out).forEach(function (k) {
+      pct[k] = total > 0 ? out[k] / total : 0;
+    });
+    var rank = Object.keys(out).sort(function (a, b) {
+      return out[b] - out[a];
+    });
+    return {
+      w: out,
+      pct: pct,
+      total: round(total),
+      rank: rank,
+      strongest: rank[0],
+      weakest: rank[rank.length - 1],
+      all: Object.keys(out).map(function (k) {
+        return { name: k, w: round(out[k]), pct: round(pct[k], 3) };
+      }),
+    };
+  }
+
+  /* ---------- 8. 事业方向 ---------- */
+  var WX_FIELD = {
+    木: { dir: '东方', field: '文教、出版、设计、林木园艺、医药、公益', trait: '生长与规划' },
+    火: { dir: '南方', field: '文化传媒、互联网、电子能源、餐饮、美业', trait: '表达与传播' },
+    土: { dir: '本地或中部', field: '地产建筑、农业、仓储物流、管理咨询、教育培训', trait: '承载与整合' },
+    金: { dir: '西方', field: '金融、法律、军警、精密制造、IT 硬件、机械', trait: '规则与效率' },
+    水: { dir: '北方', field: '贸易、物流、信息、水产、旅游、流通服务', trait: '流动与应变' },
+  };
+  var WX_COLOR_NAME = { 木: '青、绿', 火: '红、橙、紫', 土: '黄、棕、米', 金: '白、金、银', 水: '黑、蓝、灰' };
+  var CAREER_MEAN = {
+    比劫: '自主性强，习惯自己扛事，适合独立承接或与同辈合伙，靠个人口碑与圈子拿机会。',
+    食伤: '靠输出与专业吃饭，适合技术、创作、表达、产品类岗位；被强管时效率反而下降。',
+    财: '对机会和资源敏感，适合经营、商务、投资方向；短板常在现金流与节奏管理。',
+    官杀: '能承压、守规则、有职级意识，适合体制、大平台、管理与执法类路径；忌长期无约束。',
+    印: '靠学识与资历立足，适合研究、教育、文书、专业资格类路径；宜早把证书与资历拿到手。',
+  };
+  function career(p, nowYear) {
+    var ws = wangShuai(p);
+    var sp = shiShenPower(p);
+    var top = sp.all.slice().sort(function (a, b) {
+      return b.w - a.w;
+    });
+    var primary = top[0].name,
+      secondary = top[1].name;
+    var xi = ws.xi;
+    var fx = WX_FIELD[xi] || WX_FIELD.土;
+    // 当前与下一步大运：大运是十年一换的节奏，比流年更能说明阶段方向。
+    var step = null,
+      nextStep = null;
+    var list = p.daYun && p.daYun.list ? p.daYun.list : [];
+    for (var i = 0; i < list.length; i++) {
+      var start = list[i].startYear,
+        end = i === list.length - 1 ? Infinity : list[i + 1].startYear;
+      if (nowYear >= start && nowYear < end) {
+        step = list[i];
+        nextStep = list[i + 1] || null;
+        break;
+      }
+    }
+    var stepRate = step ? rateLuck(step.gan, step.zhi, ws) : null;
+    var nextRate = nextStep ? rateLuck(nextStep.gan, nextStep.zhi, ws) : null;
+    var notes = [];
+    if (step && stepRate) {
+      notes.push(
+        '当前走 ' +
+          step.gz +
+          ' 大运（' +
+          step.startYear +
+          ' 年起，' +
+          step.shiShen +
+          '），十神落点在' +
+          step.shiShen +
+          '，本步整体评分为「' +
+          stepRate.label +
+          '」。'
+      );
+    }
+    if (nextStep && nextRate) {
+      notes.push(
+        '下一步 ' +
+          nextStep.gz +
+          ' 运（' +
+          nextStep.startYear +
+          ' 年起，' +
+          nextStep.shiShen +
+          '）评分为「' +
+          nextRate.label +
+          '」，换运前后两三年通常是职业轨道变动的窗口。'
+      );
+    }
+    return {
+      power: sp,
+      primary: primary,
+      secondary: secondary,
+      primaryText: CAREER_MEAN[primary],
+      secondaryText: CAREER_MEAN[secondary],
+      fields: fx.field,
+      direction: fx.dir,
+      trait: fx.trait,
+      colors: WX_COLOR_NAME[xi],
+      xi: xi,
+      yong: ws.yong,
+      step: step,
+      nextStep: nextStep,
+      stepRate: stepRate,
+      nextRate: nextRate,
+      notes: notes,
+    };
+  }
+
+  /* ---------- 9. 婚姻感情 ---------- */
+  var LIU_HE = {
+    子: '丑',
+    丑: '子',
+    寅: '亥',
+    亥: '寅',
+    卯: '戌',
+    戌: '卯',
+    辰: '酉',
+    酉: '辰',
+    巳: '申',
+    申: '巳',
+    午: '未',
+    未: '午',
+  };
+  var LIU_CHONG = {
+    子: '午',
+    午: '子',
+    丑: '未',
+    未: '丑',
+    寅: '申',
+    申: '寅',
+    卯: '酉',
+    酉: '卯',
+    辰: '戌',
+    戌: '辰',
+    巳: '亥',
+    亥: '巳',
+  };
+  // 三合局：申子辰 / 亥卯未 / 寅午戌 / 巳酉丑
+  var SAN_HE = {
+    申: '子辰',
+    子: '申辰',
+    辰: '申子',
+    亥: '卯未',
+    卯: '亥未',
+    未: '亥卯',
+    寅: '午戌',
+    午: '寅戌',
+    戌: '寅午',
+    巳: '酉丑',
+    酉: '巳丑',
+    丑: '巳酉',
+  };
+  var MARRIAGE_MEAN = {
+    正财: '配偶宫落正财：重实际、重生活秩序，感情里看重稳定与共同经营。',
+    偏财: '配偶宫落偏财：人缘与异性缘偏旺，关系里变数多，需要把边界讲清楚。',
+    正官: '配偶宫落正官：看重名分与责任感，倾向以结婚为目标的稳定关系。',
+    七杀: '配偶宫落七杀：吸引有主见、有压迫感的对象，关系张力大，需注意强弱平衡。',
+    正印: '配偶宫落正印：伴侣偏照顾型，关系里依赖与被依赖的成分较重。',
+    偏印: '配偶宫落偏印：伴侣个性独立或思虑重，沟通成本高但精神层面易共鸣。',
+    食神: '配偶宫落食神：相处偏温和有情趣，重生活品质与共同爱好。',
+    伤官: '配偶宫落伤官：伴侣有才气、有主见、不服管，容易因直言起争执。',
+    比肩: '配偶宫落比肩：伴侣性格与你接近，像同伴多过像依靠，容易各执己见。',
+    劫财: '配偶宫落劫财：关系里容易出现第三方牵扯或财务分歧，需要提前约定。',
+  };
+  function marriage(p, nowYear) {
+    var ws = wangShuai(p);
+    var dayZhi = p.zhi[2];
+    var palaceSS = (p.zhiShiShen || [])[2] || '';
+    var isMale = p.gender !== '女';
+    var starGroup = isMale ? '财' : '官杀';
+    var starName = isMale ? '妻星（财）' : '夫星（官杀）';
+    var sp = shiShenPower(p);
+    var starW = sp.w[starGroup];
+    var starPct = sp.pct[starGroup];
+    var relations = [];
+    ['年支', '月支', '时支'].forEach(function (label, i) {
+      var idx = i === 2 ? 3 : i; // 年0 月1 时3
+      var z = p.zhi[idx];
+      if (!z || z === dayZhi) return;
+      var rel =
+        LIU_HE[dayZhi] === z
+          ? '六合'
+          : LIU_CHONG[dayZhi] === z
+            ? '六冲'
+            : (SAN_HE[dayZhi] || '').indexOf(z) >= 0
+              ? '三合'
+              : '';
+      if (rel) relations.push({ where: label, zhi: z, rel: rel });
+    });
+    // 应期：流年支与配偶宫六合/三合，或流年十神落到配偶星，都算感情动象。
+    var years = [];
+    var meta = p.meta || {};
+    var GAN = meta.GAN || [],
+      GAN_WX_ = meta.GAN_WX || GAN_WX,
+      GAN_YY = meta.GAN_YY || [];
+    (p.liuNian || []).forEach(function (ln) {
+      if (ln.year < nowYear || ln.year > nowYear + 11) return;
+      var z = (meta.ZHI || [])[ln.zhi];
+      var score = 0;
+      var why = [];
+      if (LIU_HE[dayZhi] === z) {
+        score += 2;
+        why.push('与配偶宫六合');
+      } else if ((SAN_HE[dayZhi] || '').indexOf(z) >= 0) {
+        score += 1;
+        why.push('与配偶宫三合');
+      }
+      if (LIU_CHONG[dayZhi] === z) {
+        score += 1;
+        why.push('与配偶宫相冲（动象）');
+      }
+      var gi = GAN.indexOf(GAN[ln.gan]);
+      if (gi >= 0) {
+        var ss = shiShenOf(p.dayGan, gi, GAN_WX_, GAN_YY);
+        if (SS_GROUP[ss] === starGroup) {
+          score += 2;
+          why.push('流年干为' + ss);
+        }
+      }
+      if (score >= 2) years.push({ year: ln.year, gz: ln.gz, score: score, why: why.join('、') });
+    });
+    years.sort(function (a, b) {
+      return b.score - a.score || a.year - b.year;
+    });
+    var palaceWX = {
+      子: '水',
+      丑: '土',
+      寅: '木',
+      卯: '木',
+      辰: '土',
+      巳: '火',
+      午: '火',
+      未: '土',
+      申: '金',
+      酉: '金',
+      戌: '土',
+      亥: '水',
+    }[dayZhi];
+    var palaceWXInYong = ws.yong.indexOf(palaceWX) >= 0;
+    var palaceWXInJi = ws.ji.indexOf(palaceWX) >= 0;
+    var score = 60;
+    if (starPct >= 0.2) score += 12;
+    else if (starPct >= 0.1) score += 5;
+    else score -= 8;
+    relations.forEach(function (r) {
+      if (r.rel === '六合') score += 8;
+      if (r.rel === '三合') score += 5;
+      if (r.rel === '六冲') score -= 10;
+    });
+    if (palaceWXInYong) score += 8;
+    if (palaceWXInJi) score -= 6;
+    score = Math.max(20, Math.min(95, score));
+    var level = score >= 80 ? '顺' : score >= 65 ? '偏顺' : score >= 50 ? '平' : '需留意';
+    return {
+      palace: { zhi: dayZhi, wx: palaceWX, shiShen: palaceSS, text: MARRIAGE_MEAN[palaceSS] || '' },
+      starName: starName,
+      starWeight: round(starW),
+      starPct: round(starPct, 3),
+      relations: relations,
+      score: score,
+      level: level,
+      years: years.slice(0, 5),
+      isMale: isMale,
+      notes: [],
+    };
+  }
+
+  /* ---------- 10. 八宅布局建议 ---------- */
+  var STAR_USE = {
+    生气: '大门、主卧、书房、办公桌位、神位（第一优先）',
+    延年: '主卧、夫妻房、会客区',
+    天医: '卧室、厨房、老人房、养病休养位',
+    伏位: '卧室、静室、储物',
+    祸害: '卫生间、储物间、走廊（不宜大门与卧室）',
+    六煞: '卫生间、杂物间（忌作卧室与厨房）',
+    五鬼: '卫生间、储物间（忌大门、卧室、厨房）',
+    绝命: '卫生间、杂物间（最忌大门与主卧）',
+  };
+  function layoutPlan(bazhai, ws) {
+    var rows = bazhai.list
+      .slice()
+      .sort(function (a, b) {
+        var ia = { 西北: 0, 正北: 1, 东北: 2, 正东: 3, 东南: 4, 正南: 5, 西南: 6, 正西: 7 };
+        return ia[a.dir] - ia[b.dir];
+      })
+      .map(function (f) {
+        return { dir: f.dir, deg: f.deg, star: f.star, ji: f.ji, use: STAR_USE[f.star] || '' };
+      });
+    // 床位与书桌：床头朝吉方，书桌「坐凶向吉」。
+    var best = bazhai.jiFang[0];
+    var second = bazhai.jiFang[1] || bazhai.jiFang[0];
+    var worst =
+      bazhai.xiongFang.filter(function (f) {
+        return f.star === '绝命' || f.star === '五鬼';
+      })[0] || bazhai.xiongFang[0];
+    return {
+      rows: rows,
+      bedHead: best.dir,
+      desk: '坐 ' + (worst ? worst.dir : best.dir) + '、朝 ' + best.dir,
+      altar: best.dir,
+      second: second.dir,
+      xi: ws.xi,
+      yong: ws.yong,
+      colors: WX_COLOR_NAME[ws.xi],
+      avoid: (worst ? worst.dir : '') + '（' + (worst ? worst.star : '') + '）',
+    };
+  }
+
+  /* ---------- 11. 姓名优选 ---------- */
+  // 五格剖象法：格五行按笔画尾数取，1/2 木、3/4 火、5/6 土、7/8 金、9/0 水。
+  var GE_WX = ['水', '木', '木', '火', '火', '土', '土', '金', '金', '水'];
+  function geWX(num) {
+    return GE_WX[((num % 10) + 10) % 10];
+  }
+  /**
+   * 三才（天格-人格-地格）顺逆：比和或相生为顺，相克为逆。
+   * 这是对传统三才配置表的简化判断，只用于筛选候选笔画，不替代完整配置表。
+   */
+  function sanCaiJudge(t, r, d) {
+    var pair = function (a, b) {
+      if (a === b) return '比和';
+      if (SHENG[a] === b || SHENG[b] === a) return '相生';
+      return '相克';
+    };
+    var p1 = pair(t, r),
+      p2 = pair(r, d);
+    var bad = (p1 === '相克' ? 1 : 0) + (p2 === '相克' ? 1 : 0);
+    return { p1: p1, p2: p2, bad: bad, level: bad === 0 ? '三才相生' : bad === 1 ? '三才半顺' : '三才相克' };
+  }
+  function geFromBi(bi) {
+    var n = bi.length,
+      tian,
+      ren,
+      di,
+      wai,
+      zong;
+    if (n === 2) {
+      tian = bi[0] + 1;
+      ren = bi[0] + bi[1];
+      di = bi[1] + 1;
+      wai = 2;
+      zong = bi[0] + bi[1];
+    } else if (n === 3) {
+      tian = bi[0] + 1;
+      ren = bi[0] + bi[1];
+      di = bi[1] + bi[2];
+      wai = bi[2] + 1;
+      zong = bi[0] + bi[1] + bi[2];
+    } else if (n === 4) {
+      tian = bi[0] + bi[1];
+      ren = bi[1] + bi[2];
+      di = bi[2] + bi[3];
+      wai = bi[0] + bi[3];
+      zong = bi[0] + bi[1] + bi[2] + bi[3];
+    } else return null;
+    return { 天格: tian, 人格: ren, 地格: di, 外格: wai, 总格: zong };
+  }
+  // 笔画 -> 已收录用字，用于把「建议笔画」落成可挑选的字。
+  var BI_TO_CHARS = (function () {
+    var map = {};
+    Object.keys(BIHUA).forEach(function (c) {
+      var s = BIHUA[c];
+      (map[s] = map[s] || []).push(c);
+    });
+    return map;
+  })();
+  var JI_SCORE = { 吉: 2, 半吉: 1, 凶: 0 };
+  /**
+   * 姓名优选：枚举「改末字」与「改中间字」两种改法下的笔画候选，
+   * 按五格吉数、三才顺逆、格五行是否落在用神上综合排序。
+   * 现名若已全部合格，会明确说明无需改动，不为了改而改。
+   */
+  function nameAdvise(name, ws, opts) {
+    var w = wuGe(name);
+    if (!w.ok) return { ok: false, reason: '未收录字形', unknown: w.unknown };
+    var chars = w.chars,
+      bi = w.bi,
+      n = bi.length;
+    if (n < 2) return { ok: false, reason: '姓名至少两字' };
+    var minStrokes = (opts && opts.minStrokes) || 3;
+    var maxStrokes = (opts && opts.maxStrokes) || 24;
+    var yongSet = {};
+    ws.yong.forEach(function (x) {
+      yongSet[x] = '用神';
+    });
+    ws.ji.forEach(function (x) {
+      yongSet[x] = '忌神';
+    });
+    function judge(ge) {
+      var d = {};
+      var score = 0;
+      ['人格', '地格', '总格'].forEach(function (k) {
+        var j = shuJi(ge[k]);
+        d[k] = { num: j.num, ji: j.ji, wx: geWX(j.num) };
+        score += JI_SCORE[j.ji] || 0;
+      });
+      var san = sanCaiJudge(geWX(shuJi(ge.天格).num), geWX(shuJi(ge.人格).num), geWX(shuJi(ge.地格).num));
+      score += san.bad === 0 ? 2 : san.bad === 1 ? 0 : -2;
+      ['人格', '地格'].forEach(function (k) {
+        var t = yongSet[d[k].wx];
+        if (t === '用神') score += 1;
+        if (t === '忌神') score -= 1;
+      });
+      d.三才 = san;
+      return { ge: ge, detail: d, score: score, sanCai: san };
+    }
+    var current = judge(geFromBi(bi));
+    var currentAllJi = ['人格', '地格', '总格'].every(function (k) {
+      return current.detail[k].ji !== '凶';
+    });
+    // 只改「名」不动「姓」：姓名学上改姓不现实，天格固定。
+    var picks = [];
+    for (var pos = 1; pos < n; pos++) {
+      for (var s = minStrokes; s <= maxStrokes; s++) {
+        var nb = bi.slice();
+        nb[pos] = s;
+        var ge = geFromBi(nb);
+        if (!ge) continue;
+        var j = judge(ge);
+        // 硬门槛：人格与地格不能是凶数，否则不值得推荐。
+        if (j.detail.人格.ji === '凶' || j.detail.地格.ji === '凶') continue;
+        picks.push({
+          pos: pos,
+          posLabel: pos === 1 ? '中间字' : '末字',
+          strokes: s,
+          ge: ge,
+          detail: j.detail,
+          sanCai: j.sanCai,
+          score: j.score,
+          chars: (BI_TO_CHARS[s] || []).slice(0, 8),
+        });
+      }
+    }
+    picks.sort(function (a, b) {
+      return b.score - a.score || a.strokes - b.strokes;
+    });
+    return {
+      ok: true,
+      chars: chars,
+      bi: bi,
+      current: { ge: current.ge, detail: current.detail, sanCai: current.sanCai, allJi: currentAllJi },
+      picks: picks.slice(0, 6),
+      total: picks.length,
+      xi: ws.xi,
+      yong: ws.yong,
+      ji: ws.ji,
+    };
+  }
+
   return {
     wangShuai: wangShuai,
     SS_MEAN: SS_MEAN,
@@ -720,6 +1217,14 @@
     wuGe: wuGe,
     shuJi: shuJi,
     hehun: hehun,
+    shiShenOf: shiShenOf,
+    shiShenPower: shiShenPower,
+    career: career,
+    marriage: marriage,
+    layoutPlan: layoutPlan,
+    nameAdvise: nameAdvise,
+    geWX: geWX,
+    sanCaiJudge: sanCaiJudge,
     BIHUA: BIHUA,
     STAR_INFO: STAR_INFO,
     GUA_DIR: GUA_DIR,

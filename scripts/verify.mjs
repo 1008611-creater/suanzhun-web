@@ -27,6 +27,7 @@ const required = [
   'docs/adr/0003-result-contrast-token-contract.md',
   'docs/adr/0004-csp-single-owner-and-input-escaping.md',
   'docs/adr/0005-liunian-window-and-result-next-step.md',
+  'docs/adr/0006-action-advice-engine.md',
   'scripts/secret-scan.mjs',
   'scripts/check-contrast.mjs',
   'tests/preview.test.mjs',
@@ -136,6 +137,29 @@ const engineHasLnYears = /function\s+lnYears\s*\(/u.test(readFileSync(resolve(ro
 const hasNextStepCard = /'wx-id',\s*'ANS_0912'/u.test(appJs) && /复制微信号/u.test(appJs) && /card next/u.test(appJs);
 const hasPrintStyles = /@media print/u.test(paipan);
 
+/**
+ * 行动建议引擎：事业、婚姻、八宅落地、姓名优选四块都要真的接进结果页。
+ * 引擎新增了函数但界面没调用，是「写了但用户看不到」的典型漂移，这里锁死两端。
+ */
+const analysisJs = readFileSync(resolve(root, 'analysis.js'), 'utf8');
+const adviceCalls = ['career', 'marriage', 'layoutPlan', 'nameAdvise'].map((fn) => ({
+  fn,
+  used: new RegExp(`A\\.${fn}\\(`, 'u').test(appJs),
+  exported: new RegExp(`\\b${fn}:\\s*${fn}\\b`, 'u').test(analysisJs),
+}));
+const adviceCards = [
+  ['事业与财运方向', /'事业与财运方向'/u],
+  ['婚姻与感情', /'婚姻与感情'/u],
+  ['八宅落地布局', /'八宅落地布局'/u],
+  ['姓名优选建议', /'姓名优选建议'/u],
+];
+const adviceWired = adviceCalls.every((x) => x.used && x.exported);
+const adviceRendered = adviceCards.every(([, re]) => re.test(appJs));
+/** 事业与婚姻必须接收 nowYear，不能在计算模块里读系统时间（可复现性约束）。 */
+const adviceTakesNowYear = /A\.career\(p,\s*nowYear\)/u.test(appJs) && /A\.marriage\(p,\s*nowYear\)/u.test(appJs);
+const engineReadsClock = /new Date\(|Date\.now\(/u.test(analysisJs);
+const adviceHasDisclaimer = /不构成择业或投资建议/u.test(appJs) && /不做「正缘」承诺/u.test(appJs);
+
 const checks = [
   ['home links to paipan', /href=["']paipan\.html/iu.test(home)],
   ['paipan loads bazi', /<script[^>]+src=["']bazi\.js/iu.test(paipan)],
@@ -173,6 +197,10 @@ const checks = [
   ['流年年数由调用方传入且引擎有下限', liuNianYearsPassed && engineHasLnYears],
   ['结果页有下一步转化卡片', hasNextStepCard],
   ['结果页有打印样式', hasPrintStyles],
+  ['行动建议四块都接进结果页且引擎有导出', adviceWired],
+  ['结果页包含事业/婚姻/八宅落地/姓名优选标题', adviceRendered],
+  ['事业与婚姻接收 nowYear 而非读系统时间', adviceTakesNowYear && !engineReadsClock],
+  ['行动建议带免责说明', adviceHasDisclaimer],
   ['页面声明 CSP 兼容结构（无内联脚本）', !/<script(?![^>]*\bsrc=)[^>]*>/iu.test(home + paipan)],
 ];
 const failures = checks.filter(([, ok]) => !ok).map(([name]) => name);

@@ -36,6 +36,7 @@ README.md
 | `adr/0003-result-contrast-token-contract.md`      | 结果页文字对比度由令牌契约锁定                       |
 | `adr/0004-csp-single-owner-and-input-escaping.md` | CSP 单归属与用户输入转义                             |
 | `adr/0005-liunian-window-and-result-next-step.md` | 流年窗口跟随当前年份与结果页转化收尾                 |
+| `adr/0006-action-advice-engine.md`                | 行动建议引擎：事业、婚姻、八宅落地与姓名优选         |
 | `adr/README.md`                                   | ADR 编号与只增不改约定                               |
 
 ## 权威来源（不要重复维护）

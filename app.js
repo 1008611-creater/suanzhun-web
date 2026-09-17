@@ -504,6 +504,199 @@
     );
     box.appendChild(c6);
 
+    /* --- 6b. 八宅落地布局：把吉凶方位翻译成家具与功能区位置 --- */
+    var lp = A.layoutPlan(p.bazhai, ws);
+    var c6b = el('div', 'card');
+    c6b.appendChild(el('h2', null, '八宅落地布局'));
+    var lpg = el('div', 'grid2');
+    lpg.innerHTML =
+      '<div>' +
+      kv('床头朝向', '<span class="big" style="font-size:19px">' + lp.bedHead + '</span>（吉方）') +
+      kv('书桌 / 办公位', lp.desk) +
+      kv('神位 / 供桌', lp.altar) +
+      '</div>' +
+      '<div>' +
+      kv('次选吉方', lp.second) +
+      kv('助力颜色', lp.colors) +
+      kv('重点回避', lp.avoid) +
+      '</div>';
+    c6b.appendChild(lpg);
+    var lpt = el('table');
+    var lph = '<tr><th>方位</th><th>度数</th><th>星曜</th><th>吉凶</th><th>宜用</th></tr>';
+    lp.rows.forEach(function (r) {
+      lph +=
+        '<tr><td>' +
+        r.dir +
+        '</td><td style="font-size:12px">' +
+        r.deg +
+        '</td><td>' +
+        r.star +
+        '</td><td><span class="tag ' +
+        jClass(r.ji) +
+        '">' +
+        r.ji +
+        '</span></td>' +
+        '<td style="text-align:left;font-size:12px;color:var(--dim)">' +
+        r.use +
+        '</td></tr>';
+    });
+    lpt.innerHTML = lph;
+    var lptWrap = el('div');
+    lptWrap.style.marginTop = '16px';
+    lptWrap.appendChild(lpt);
+    c6b.appendChild(lptWrap);
+    c6b.appendChild(
+      el(
+        'div',
+        'note',
+        '床头宜靠吉方、书桌宜「坐凶向吉」，主卧与神位优先取生气、延年、天医。以上只论命卦八宅，实际还要结合房屋坐向与户型，不能只凭一个罗盘方位下结论。'
+      )
+    );
+    box.appendChild(c6b);
+
+    /* --- 6c. 事业与财运方向：十神结构 + 大运阶段 --- */
+    var ca = A.career(p, nowYear);
+    var c6c = el('div', 'card');
+    c6c.appendChild(el('h2', null, '事业与财运方向'));
+    var cag = el('div', 'grid2');
+    cag.innerHTML =
+      '<div>' +
+      kv('主导十神', ca.primary + '（' + Math.round(ca.power.pct[ca.primary] * 100) + '%）') +
+      kv('次要十神', ca.secondary + '（' + Math.round(ca.power.pct[ca.secondary] * 100) + '%）') +
+      kv('发力方向', ca.direction + ' · ' + ca.trait) +
+      '</div>' +
+      '<div>' +
+      kv('适合行业属性', ca.fields) +
+      kv('助力颜色', ca.colors) +
+      kv('用神 / 忌神', ca.yong.join('、') + ' / ' + ws.ji.join('、')) +
+      '</div>';
+    c6c.appendChild(cag);
+    var cam = el('div', 'adv-wrap');
+    cam.innerHTML =
+      '<div class="adv"><div class="adv-t">你的做事方式</div><p>' +
+      ca.primaryText +
+      '</p></div>' +
+      '<div class="adv"><div class="adv-t">可以借力的第二面</div><p>' +
+      ca.secondaryText +
+      '</p></div>';
+    c6c.appendChild(cam);
+    var cad = el('div', 'grid2');
+    cad.style.marginTop = '6px';
+    cad.innerHTML =
+      '<div>' +
+      kv('当前大运', ca.step ? ca.step.gz + '（' + ca.step.startYear + ' 起 · ' + ca.step.shiShen + '）' : '—') +
+      kv(
+        '本步吉凶',
+        ca.stepRate ? '<span class="tag ' + jClass(ca.stepRate.label) + '">' + ca.stepRate.label + '</span>' : '—'
+      ) +
+      '</div>' +
+      '<div>' +
+      kv(
+        '下一步大运',
+        ca.nextStep ? ca.nextStep.gz + '（' + ca.nextStep.startYear + ' 起 · ' + ca.nextStep.shiShen + '）' : '—'
+      ) +
+      kv(
+        '下一步吉凶',
+        ca.nextRate ? '<span class="tag ' + jClass(ca.nextRate.label) + '">' + ca.nextRate.label + '</span>' : '—'
+      ) +
+      '</div>';
+    c6c.appendChild(cad);
+    if (ca.notes.length) {
+      var can = el('div');
+      can.style.marginTop = '10px';
+      can.innerHTML = ca.notes
+        .map(function (s) {
+          return (
+            '<div class="kv"><span class="v" style="font-weight:400;text-align:left;font-size:12px;color:var(--dim)">· ' +
+            s +
+            '</span></div>'
+          );
+        })
+        .join('');
+      c6c.appendChild(can);
+    }
+    c6c.appendChild(
+      el(
+        'div',
+        'note',
+        '事业方向按「十神结构 + 用神喜忌」给出，说明的是适合的发力方式与行业属性，不是行业排名，也不构成择业或投资建议。换运前后两三年通常是轨道变动的窗口，值得提前准备。'
+      )
+    );
+    box.appendChild(c6c);
+
+    /* --- 6d. 婚姻与感情：配偶宫 + 配偶星 + 流年应期 --- */
+    var ma = A.marriage(p, nowYear);
+    var c6d = el('div', 'card');
+    c6d.appendChild(el('h2', null, '婚姻与感情'));
+    var mag = el('div', 'grid2');
+    mag.innerHTML =
+      '<div>' +
+      kv('配偶宫', ma.palace.zhi + '（' + ma.palace.wx + ' · ' + ma.palace.shiShen + '）') +
+      kv(
+        '配偶宫解读',
+        '<span style="font-weight:400;font-size:12px;color:var(--dim);text-align:left">' + ma.palace.text + '</span>'
+      ) +
+      '</div>' +
+      '<div>' +
+      kv('感情星', ma.starName + ' 占 ' + Math.round(ma.starPct * 100) + '%') +
+      kv('整体倾向', '<span class="big" style="font-size:19px">' + ma.level + '</span>') +
+      '</div>';
+    c6d.appendChild(mag);
+    if (ma.relations.length) {
+      var mar = el('div');
+      mar.style.marginTop = '10px';
+      mar.innerHTML = ma.relations
+        .map(function (r) {
+          return (
+            '<div class="kv"><span class="k">' +
+            r.where +
+            ' ' +
+            r.zhi +
+            '</span><span class="v">与配偶宫' +
+            r.rel +
+            '</span></div>'
+          );
+        })
+        .join('');
+      c6d.appendChild(mar);
+    }
+    var maYears = ma.years.slice().sort(function (a, b) {
+      return a.year - b.year;
+    });
+    if (maYears.length) {
+      var mat = el('table');
+      var matWrap = el('div');
+      matWrap.style.marginTop = '16px';
+      var mah = '<tr><th>应期年份</th><th>干支</th><th>虚岁</th><th>动象</th></tr>';
+      maYears.forEach(function (y) {
+        mah +=
+          '<tr' +
+          (y.year === nowYear ? ' class="now"' : '') +
+          '><td>' +
+          y.year +
+          '</td><td style="font-size:15px">' +
+          y.gz +
+          '</td><td>' +
+          (y.year - p.input.year + 1) +
+          '</td><td style="text-align:left;font-size:12px;color:var(--dim)">' +
+          y.why +
+          '</td></tr>';
+      });
+      mat.innerHTML = mah;
+      matWrap.appendChild(mat);
+      c6d.appendChild(matWrap);
+    } else {
+      c6d.appendChild(el('div', 'note', '未来十二年内没有出现明显的配偶宫动象，属于需要主动经营的阶段。'));
+    }
+    c6d.appendChild(
+      el(
+        'div',
+        'note',
+        '婚姻部分只看配偶宫、配偶星与流年动象，说明的是「关系节奏与相处模式」，不能预测具体某个人，也不做「正缘」承诺。真正决定结果的仍然是相处方式与现实条件。'
+      )
+    );
+    box.appendChild(c6d);
+
     /* --- 7. 姓名 --- */
     var c7 = el('div', 'card');
     c7.appendChild(el('h2', null, '姓名五格分析'));
@@ -559,6 +752,106 @@
       );
     }
     box.appendChild(c7);
+
+    /* --- 7b. 姓名优选：不动姓，只枚举「改中间字 / 改末字」的笔画候选 --- */
+    var na = A.nameAdvise(p.name, ws);
+    var c7b = el('div', 'card');
+    c7b.appendChild(el('h2', null, '姓名优选建议'));
+    if (!na.ok) {
+      c7b.appendChild(el('div', 'note', '无法给出改名建议：' + esc(na.reason || '字形未收录') + '。'));
+    } else {
+      var cur = na.current;
+      var curBad = ['人格', '地格', '总格'].filter(function (k) {
+        return cur.detail[k].ji === '凶';
+      });
+      var cg = el('div', 'grid2');
+      cg.innerHTML =
+        '<div>' +
+        kv('现名笔画', na.bi.join(' / ')) +
+        kv(
+          '人格 / 地格',
+          cur.ge['人格'] + '（' + cur.detail['人格'].ji + '）/ ' + cur.ge['地格'] + '（' + cur.detail['地格'].ji + '）'
+        ) +
+        '</div>' +
+        '<div>' +
+        kv('总格', cur.ge['总格'] + '（' + cur.detail['总格'].ji + '）') +
+        kv('三才', cur.sanCai.level) +
+        '</div>';
+      c7b.appendChild(cg);
+      c7b.appendChild(
+        el(
+          'div',
+          'note',
+          curBad.length
+            ? '现名有需要处理的地方：' +
+                curBad.join('、') +
+                '为凶数。下面的候选都先满足「人格与地格不为凶」这条硬门槛，再按五格吉数、三才顺逆、格五行是否落在用神上排序。'
+            : '现名五格没有硬伤，可以不改。下面给出的是「如果想调」的可选方向，不是必须改。'
+        )
+      );
+      if (na.picks.length) {
+        var nat = el('table');
+        var natWrap = el('div');
+        natWrap.style.marginTop = '16px';
+        var nah =
+          '<tr><th>改法</th><th>笔画</th><th>人格</th><th>地格</th><th>总格</th><th>三才</th><th>可选字</th></tr>';
+        na.picks.forEach(function (k) {
+          nah +=
+            '<tr><td>' +
+            k.posLabel +
+            '</td><td style="font-weight:600">' +
+            k.strokes +
+            ' 画</td>' +
+            '<td>' +
+            k.ge['人格'] +
+            ' <span class="tag ' +
+            jClass(k.detail['人格'].ji) +
+            '">' +
+            k.detail['人格'].ji +
+            '</span></td>' +
+            '<td>' +
+            k.ge['地格'] +
+            ' <span class="tag ' +
+            jClass(k.detail['地格'].ji) +
+            '">' +
+            k.detail['地格'].ji +
+            '</span></td>' +
+            '<td>' +
+            k.ge['总格'] +
+            ' <span class="tag ' +
+            jClass(k.detail['总格'].ji) +
+            '">' +
+            k.detail['总格'].ji +
+            '</span></td>' +
+            '<td style="font-size:12px">' +
+            k.sanCai.level +
+            '</td>' +
+            '<td style="font-size:13px;letter-spacing:.08em">' +
+            (k.chars.length ? k.chars.map(esc).join(' ') : '—') +
+            '</td></tr>';
+        });
+        nat.innerHTML = nah;
+        natWrap.appendChild(nat);
+        c7b.appendChild(natWrap);
+        c7b.appendChild(
+          el(
+            'div',
+            'note',
+            '「可选字」只列出本站笔画库中同笔画的常用字，方便你按音、形、义自己挑，不代表这些字都适合入名。改名只在名字上调整，天格（姓）不动。'
+          )
+        );
+      } else {
+        c7b.appendChild(el('div', 'note', '在 3–24 画的范围内没有找到同时满足人格、地格不为凶的候选。'));
+      }
+      c7b.appendChild(
+        el(
+          'div',
+          'note',
+          '五格剖象法是近代姓名学流派之一，不同流派对笔画与吉凶的取法并不统一。改名是个人选择，请结合本人意愿、读音字义与户籍规定，不要为了「补数」硬凑生僻字。'
+        )
+      );
+    }
+    box.appendChild(c7b);
 
     /* --- 8. 合婚 --- */
     if (p.partner) {
