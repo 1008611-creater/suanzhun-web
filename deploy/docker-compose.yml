@@ -1,0 +1,17 @@
+# 「算的准」静态站点运行时定义
+# 服务器上放在 /srv/suanzhun/docker-compose.yml，用 docker compose up -d 接管容器。
+# 容器名固定为 suanzhun-web，Caddy 通过这个服务名反向代理，改名会断站。
+services:
+  web:
+    image: nginx:1.27-alpine
+    container_name: suanzhun-web
+    restart: unless-stopped
+    volumes:
+      - /srv/suanzhun/public:/usr/share/nginx/html:ro
+      - /srv/suanzhun/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - app_default
+
+networks:
+  app_default:
+    external: true

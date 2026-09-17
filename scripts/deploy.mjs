@@ -2,6 +2,7 @@
 // 用法：npm run deploy                 正式发布
 //      npm run deploy -- --dry-run    只做检查与差异比对，不上传
 //      npm run deploy -- --skip-check 跳过质量门（仅供排障）
+//      npm run deploy -- --with-infra 同时同步 Nginx 与 Compose 定义并重建容器
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -12,15 +13,45 @@ const root = resolve(import.meta.dirname, '..');
 const argv = process.argv.slice(2);
 const dryRun = argv.includes('--dry-run');
 const skipCheck = argv.includes('--skip-check');
+const withInfra = argv.includes('--with-infra');
 
 const HOST = process.env.SUANZHUN_HOST || 'root@38.76.193.254';
 const SSH_KEY = process.env.SUANZHUN_SSH_KEY || 'C:/Users/lsb/.ssh/haika_niannian_ed25519';
 const REMOTE_DIR = process.env.SUANZHUN_REMOTE_DIR || '/srv/suanzhun/public';
 const BACKUP_ROOT = process.env.SUANZHUN_BACKUP_ROOT || '/srv/suanzhun/backups';
 const BASE_URL = process.env.SUANZHUN_BASE_URL || 'https://suanzhun.cauai.fun';
+const INFRA_DIR = process.env.SUANZHUN_INFRA_DIR || '/srv/suanzhun';
 
-const FILES = ['index.html', 'paipan.html', 'app.js', 'analysis.js', 'bazi.js', 'robots.txt', 'sitemap.xml'];
-const URLS = ['/', '/paipan.html', '/app.js', '/analysis.js', '/bazi.js', '/robots.txt', '/sitemap.xml'];
+const FILES = [
+  'index.html',
+  'paipan.html',
+  '404.html',
+  'app.js',
+  'analysis.js',
+  'bazi.js',
+  'favicon.svg',
+  'apple-touch-icon.png',
+  'og-image.png',
+  'robots.txt',
+  'sitemap.xml',
+];
+const URLS = [
+  '/',
+  '/paipan.html',
+  '/app.js',
+  '/analysis.js',
+  '/bazi.js',
+  '/favicon.svg',
+  '/apple-touch-icon.png',
+  '/og-image.png',
+  '/robots.txt',
+  '/sitemap.xml',
+];
+// 基础设施文件上传到站点目录的上一级，仅在 --with-infra 时处理
+const INFRA_FILES = [
+  ['deploy/nginx.conf', 'nginx.conf'],
+  ['deploy/docker-compose.yml', 'docker-compose.yml'],
+];
 const SSH_OPTS = [
   '-o',
   'BatchMode=yes',
@@ -153,6 +184,63 @@ async function main() {
     const mismatch = FILES.filter((f) => local.get(f) !== after.get(f));
     if (mismatch.length) throw new Error('上传后哈希不一致：' + mismatch.join(' '));
     console.log('  全部文件哈希一致');
+  }
+
+  if (withInfra) {
+    step('同步基础设施定义');
+    for (const [source, target] of INFRA_FILES) {
+      const localText = readFileSync(resolve(root, source), 'utf8');
+      const remoteScript = 'cat ' + INFRA_DIR + '/' + target + ' 2>/dev/null || true';
+      const remoteText = ssh(remoteScript, '读取远端 ' + target);
+      if (remoteText === localText) {
+        console.log('  一致   ' + target);
+        continue;
+      }
+      if (dryRun) {
+        console.log('  [dry-run] 将更新 ' + target);
+        continue;
+      }
+      mustRun('scp', [...SSH_OPTS, resolve(root, source), HOST + ':' + INFRA_DIR + '/' + target], '上传 ' + target);
+      console.log('  已更新 ' + target);
+    }
+    if (!dryRun) {
+      step('校验 Nginx 配置');
+      ssh(
+        [
+          'set -e',
+          'docker run --rm -v ' +
+            INFRA_DIR +
+            '/nginx.conf:/etc/nginx/conf.d/default.conf:ro nginx:1.27-alpine nginx -t',
+        ].join(LF),
+        '校验 nginx.conf'
+      )
+        .split(LF)
+        .filter(Boolean)
+        .forEach((line) => console.log('  ' + line.trim()));
+
+      step('重建容器');
+      ssh(
+        [
+          'set -e',
+          'cd ' + INFRA_DIR,
+          // 早期容器由 docker run 创建，没有 compose 标签；先移除再交给 compose 接管。
+          'if docker inspect suanzhun-web >/dev/null 2>&1; then',
+          '  if docker inspect -f "{{.Config.Labels}}" suanzhun-web | grep -q com.docker.compose.project; then',
+          '    echo "容器已由 compose 管理"',
+          '  else',
+          '    echo "移除旧的非 compose 容器 suanzhun-web"',
+          '    docker rm -f suanzhun-web >/dev/null',
+          '  fi',
+          'fi',
+          'docker compose up -d --force-recreate',
+          'docker ps --filter name=suanzhun-web --format "{{.Names}} {{.Status}}"',
+        ].join(LF),
+        '重建 suanzhun-web'
+      )
+        .split(LF)
+        .filter(Boolean)
+        .forEach((line) => console.log('  ' + line.trim()));
+    }
   }
 
   step('线上探活');

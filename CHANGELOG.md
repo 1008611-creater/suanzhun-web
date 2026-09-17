@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.4.0 - 2026-09-17
+
+### 站点完备性
+
+- 新增 `favicon.svg`、`apple-touch-icon.png` 与 `og-image.png`，分享到微信或社交平台时有品牌卡片。
+- 首页与排盘页补齐 `description`、`canonical`、Open Graph 与主题色；站点地图更新时间修正为 2026-09-17。
+- 新增 `404.html`，访问不存在的地址不再落到 Nginx 默认错误页。
+- 新增 `npm run assets`，图标与分享卡片由脚本生成，视觉调整后可复现。
+
+### 基础设施可复现
+
+- 新增 `deploy/docker-compose.yml` 与 `deploy/nginx.conf`，把原先手工 `docker run` 起的容器纳入 compose 管理。
+- Nginx 配置补上 gzip 压缩与静态资源缓存策略；页面与脚本保持每次回校验收。
+- 发布脚本新增 `--with-infra`，可一并同步基础设施定义并重建容器，重建前会先校验配置。
+
+### 仓库协作
+
+- 新增 `.gitattributes` 统一换行符，新增 `SECURITY.md`、Dependabot 与 PR / Issue 模板。
+
 ## 0.3.2 - 2026-09-17
 
 ### 工程与发布
