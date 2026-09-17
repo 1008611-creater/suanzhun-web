@@ -331,6 +331,13 @@
     return out;
   }
 
+  /* 流年年数：默认一个完整甲子（60 年）；调用方可要求更多（早年生人需覆盖当下）。
+     引擎本身不读系统时间，保证结果可复现。 */
+  function lnYears(opt) {
+    var want = Number(opt && opt.liuNianYears);
+    return isFinite(want) && want > 60 ? Math.floor(want) : 60;
+  }
+
   /* ---------- 主排盘函数 ---------- */
   function paipan(opt) {
     var name = opt.name || '无名';
@@ -405,7 +412,9 @@
       xunKong: xunKong(dzFinal),
       wx: wx,
       daYun: dy,
-      liuNian: liuNian(y + 1, 60, dayGan),
+      // 默认给满一个 60 年甲子循环；调用方可以要求更多年（例如早年生人需要覆盖当下），
+      // 但下限仍是 60，保证引擎本身不依赖当前时间、结果可复现。
+      liuNian: liuNian(y + 1, lnYears(opt), dayGan),
       monthTerm: mz.termName,
       meta: { GAN: GAN, ZHI: ZHI, GAN_WX: GAN_WX, ZHI_WX: ZHI_WX, CANG: CANG, GAN_YY: GAN_YY, ZHI_YY: ZHI_YY },
     };

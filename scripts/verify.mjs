@@ -26,6 +26,7 @@ const required = [
   'docs/adr/0002-secret-scan-before-push.md',
   'docs/adr/0003-result-contrast-token-contract.md',
   'docs/adr/0004-csp-single-owner-and-input-escaping.md',
+  'docs/adr/0005-liunian-window-and-result-next-step.md',
   'scripts/secret-scan.mjs',
   'scripts/check-contrast.mjs',
   'tests/preview.test.mjs',
@@ -120,6 +121,21 @@ const escapesUserName = /kv\(\s*['"]姓名['"]\s*,\s*esc\(/u.test(appJs);
 const escapesUnknown = /esc\(\(n5\.unknown/u.test(appJs);
 const escapesNotes = /n5\.notes\.map\(esc\)/u.test(appJs);
 
+/**
+ * 流年窗口曾经写死成 2026–2035：1930/1965 年生人排出来的流年表整块空白。
+ * 现在窗口跟着当前年份走，年数由调用方传入；这里锁死两端，防止回退。
+ */
+const liuNianWindowFollowsNow = /var\s+lnStart\s*=\s*nowYear/u.test(appJs) && !/2026\s*[–-]\s*2035/u.test(appJs);
+const liuNianYearsPassed = /liuNianYears/u.test(appJs);
+const engineHasLnYears = /function\s+lnYears\s*\(/u.test(readFileSync(resolve(root, 'bazi.js'), 'utf8'));
+
+/**
+ * 结果页在最高意图时刻原本没有任何下一步动作（整页一个 <a> 都没有）。
+ * 这里锁死收尾卡片与联系方式，防止转化入口被删掉。
+ */
+const hasNextStepCard = /'wx-id',\s*'ANS_0912'/u.test(appJs) && /复制微信号/u.test(appJs) && /card next/u.test(appJs);
+const hasPrintStyles = /@media print/u.test(paipan);
+
 const checks = [
   ['home links to paipan', /href=["']paipan\.html/iu.test(home)],
   ['paipan loads bazi', /<script[^>]+src=["']bazi\.js/iu.test(paipan)],
@@ -153,6 +169,10 @@ const checks = [
   ['CSP 在 Nginx 与本地预览逐字一致', cspAllMatchServe],
   ['每个设置缓存的 location 都带 CSP（Nginx add_header 不继承）', cspLocations >= cacheLocations && cacheLocations > 0],
   ['姓名等输入经 esc() 转义', hasEscHelper && escapesUserName && escapesUnknown && escapesNotes],
+  ['流年窗口跟随当前年份而非写死', liuNianWindowFollowsNow],
+  ['流年年数由调用方传入且引擎有下限', liuNianYearsPassed && engineHasLnYears],
+  ['结果页有下一步转化卡片', hasNextStepCard],
+  ['结果页有打印样式', hasPrintStyles],
   ['页面声明 CSP 兼容结构（无内联脚本）', !/<script(?![^>]*\bsrc=)[^>]*>/iu.test(home + paipan)],
 ];
 const failures = checks.filter(([, ok]) => !ok).map(([name]) => name);
