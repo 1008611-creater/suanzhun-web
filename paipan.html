@@ -140,6 +140,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .footer{text-align:center;color:var(--dim2);font-size:11px;margin-top:34px;letter-spacing:.1em;line-height:2}
 
 /* 结果页收尾：把「看完就走」接成可保存、可联系 */
+.adv-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+@media(max-width:640px){.adv-wrap{grid-template-columns:1fr}}
+.adv{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px 15px}
+.adv-t{font-size:12px;letter-spacing:.12em;color:var(--gold2);margin-bottom:8px}
+.adv p{font-size:13px;line-height:1.9;color:var(--dim)}
 .card.next{border-color:oklch(78% .10 350);background:linear-gradient(180deg,oklch(97% .045 350 / .92),var(--card2))}
 .next-lead{color:var(--dim);font-size:13.5px;line-height:1.95;margin-bottom:16px}
 .next-lead b{color:var(--gold2);font-weight:600}
