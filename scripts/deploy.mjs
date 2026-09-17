@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { CSP } from './serve.mjs';
 
 const LF = String.fromCharCode(10);
 const root = resolve(import.meta.dirname, '..');
@@ -133,6 +134,26 @@ function step(title) {
   console.log(LF + '== ' + title);
 }
 
+/**
+ * 安全响应头必须真的落在线上，而不是只写在配置里。
+ * nginx 的 add_header 不继承，漏写某个 location 时页面照常打开、配置也合法，
+ * 只有实际读响应头才能发现，所以在探活阶段一并校验。
+ */
+async function probeCsp(urls) {
+  const failures = [];
+  for (const path of urls) {
+    const target = BASE_URL + path;
+    try {
+      const res = await globalThis.fetch(target, { redirect: 'follow' });
+      const csp = res.headers.get('content-security-policy');
+      if (csp !== CSP) failures.push(path + ' -> ' + (csp === null ? '缺失 CSP' : 'CSP 与配置不一致'));
+    } catch (error) {
+      failures.push(path + ' -> ' + error.message);
+    }
+  }
+  return failures;
+}
+
 async function main() {
   if (!skipCheck) {
     step('质量门 release:check');
@@ -255,6 +276,20 @@ async function main() {
     : [];
   const failures = await probe(URLS, { expectMissing });
   if (failures.length) throw new Error('探活失败：' + failures.join('; '));
+
+  step('线上安全响应头');
+  const cspTargets = URLS.filter((path) => !expectMissing.includes(path));
+  const cspFailures = await probeCsp(cspTargets);
+  if (cspFailures.length) {
+    if (dryRun) {
+      // dry-run 不上传、不重建容器，线上 CSP 可能还没生效，这里只报告不拦截。
+      for (const failure of cspFailures) console.log('  [dry-run] 待生效 ' + failure);
+    } else {
+      throw new Error('CSP 校验失败：' + cspFailures.join('; '));
+    }
+  } else {
+    console.log('  ' + cspTargets.length + ' 个地址均带 Content-Security-Policy');
+  }
 
   const label = dryRun ? '[dry-run] 检查' : '发布';
   const pendingNote = expectMissing.length ? '，' + expectMissing.length + ' 个待上传地址暂返回 404' : '';

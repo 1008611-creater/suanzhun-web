@@ -93,6 +93,12 @@
     if (html !== undefined) d.innerHTML = html;
     return d;
   }
+  // 用户输入会拼进 innerHTML，必须先转义，否则姓名里写 <img onerror=...> 会直接执行。
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
   function jClass(ji) {
     if (ji === '大吉' || ji === '吉' || ji === '小吉') return 'j';
     if (ji === '大凶') return 'dx';
@@ -184,7 +190,7 @@
       return '<div class="kv"><span class="k">' + k + '</span><span class="v">' + v + '</span></div>';
     }
     left.innerHTML =
-      kv('姓名', p.name + '（' + p.gender + '）') +
+      kv('姓名', esc(p.name) + '（' + esc(p.gender) + '）') +
       kv(
         '公历生日',
         p.input.year + '年' + p.input.month + '月' + p.input.day + '日 ' + pad(p.input.hour) + ':' + pad(p.input.minute)
@@ -497,7 +503,9 @@
     c7.appendChild(el('h2', null, '姓名五格分析'));
     var n5 = p.name5;
     if (!n5.ok) {
-      c7.appendChild(el('div', 'note', '姓名字形笔画未收录：' + (n5.unknown || []).join('、') + '，无法计算五格。'));
+      c7.appendChild(
+        el('div', 'note', '姓名字形笔画未收录：' + esc((n5.unknown || []).join('、')) + '，无法计算五格。')
+      );
     } else {
       var ge = el('div', 'ge');
       [
@@ -535,7 +543,7 @@
         kv('人格', n5.ge['人格'] + '（' + n5.detail['人格'].ji + '）') +
         '</div>';
       c7.appendChild(g3);
-      if (n5.notes && n5.notes.length) c7.appendChild(el('div', 'note', n5.notes.join('<br>')));
+      if (n5.notes && n5.notes.length) c7.appendChild(el('div', 'note', n5.notes.map(esc).join('<br>')));
       c7.appendChild(
         el(
           'div',

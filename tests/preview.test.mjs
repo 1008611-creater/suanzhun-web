@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
-import { createPreviewServer } from '../scripts/serve.mjs';
+import { createPreviewServer, CSP } from '../scripts/serve.mjs';
 
 /**
  * 本地预览必须与线上 Nginx 行为一致，否则「本地是新的、线上是旧的」
@@ -59,5 +59,32 @@ test('preview 拒绝越出站点目录的路径', async () => {
     // 用百分号编码绕过 URL 归一化，验证路径守卫确实生效。
     const res = await fetch(base + '/%2e%2e%2f%2e%2e%2fpackage.json');
     assert.equal(res.status, 403);
+  });
+});
+
+/**
+ * 安全响应头必须落在每一个响应上，包括 404 与静态资源。
+ * CSP 一旦缺失，姓名里写 <img onerror=...> 这类注入就有了可乘之机。
+ */
+test('preview 所有响应都带 CSP，且与配置一致', async () => {
+  await withServer(async (base) => {
+    for (const path of ['/', '/paipan.html', '/app.js', '/og-image.png', '/robots.txt', '/does-not-exist']) {
+      const res = await fetch(base + path);
+      assert.equal(res.headers.get('content-security-policy'), CSP, `${path} CSP`);
+    }
+  });
+});
+
+test('preview CSP 禁掉内联脚本并禁止外部连接', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(base + '/');
+    const csp = res.headers.get('content-security-policy') || '';
+    assert.match(csp, /default-src 'none'/u);
+    assert.match(csp, /script-src 'self'/u);
+    assert.doesNotMatch(csp, /script-src[^;]*unsafe-inline/u, 'script-src 不应含 unsafe-inline');
+    assert.match(csp, /connect-src 'none'/u);
+    assert.match(csp, /frame-ancestors 'none'/u);
+    assert.match(csp, /base-uri 'none'/u);
+    assert.match(csp, /form-action 'none'/u);
   });
 });

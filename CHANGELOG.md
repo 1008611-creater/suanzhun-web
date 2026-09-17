@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.7.0 - 2026-09-18
+
+### 安全修复
+
+排查线上安全响应头时发现两件事：
+
+- **姓名输入存在 DOM-XSS。** 姓名会直接拼进 `innerHTML`。真实浏览器里把姓名填成
+  `<img src=x onerror="window.__xss=1">`，排盘后脚本确实执行。新增 `esc()` 转义，
+  姓名、性别、未收录字形、笔画备注等所有用户输入进入 `innerHTML` 前一律转义。
+- **缺少 Content-Security-Policy。** 补齐 CSP：`script-src 'self'`（站点无内联脚本、
+  无 eval、无内联事件处理器）、`connect-src 'none'`（计算全在本地）、
+  `frame-ancestors 'none'`、`base-uri 'none'`、`form-action 'none'`。
+
+### 踩坑：nginx `add_header` 不继承
+
+`add_header` 不是累加语义——只要某个 `location` 自己写了 `add_header`，服务器层的
+`add_header` 对该 location 整组失效。本配置有四个 location 写了 `Cache-Control`，
+只在 `server` 层写 CSP 会让这些响应**恰恰没有 CSP**。已改为每个缓存 location 各写一份，
+并在真实 `nginx:1.27-alpine` 容器验证：所有 200/404 响应都带 CSP，完整排盘 0 违规 0 报错。
+
+### 无障碍修复
+
+- 排盘页两个输入框触控目标由 43px 提到 44px（`min-height:44px`），对齐 `DESIGN.md`
+  的「触控目标 >=44px」约定；375px 下 `under44` 由 2 降为 0。
+
+### 工程质量
+
+- `scripts/serve.mjs` 导出 `CSP` 常量，`deploy/nginx.conf` 用 `set $csp` 定义同一份，
+  本地预览与线上逐字对齐。
+- 新增 4 项契约：CSP 逐字一致、缓存 location 都带 CSP、输入经 `esc()` 转义、页面无内联脚本。
+- 新增 2 项预览测试：所有响应都带 CSP、CSP 禁用内联脚本与外部连接。
+- 所有新闸门都做过反向验证（删转义、删某处 CSP、制造漂移），确认会真的失败而非恒真。
+
+### 文档
+
+- 新增 `docs/adr/0004-csp-single-owner-and-input-escaping.md`，记录 CSP 归属、
+  `add_header` 继承坑与输入转义决策。
+
 ## 0.6.0 - 2026-09-18
 
 ### 无障碍修复（结果页可读性）
