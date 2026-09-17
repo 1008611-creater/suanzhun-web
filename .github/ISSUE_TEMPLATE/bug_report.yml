@@ -1,0 +1,39 @@
+name: 缺陷报告
+description: 页面、计算或发布流程出现问题
+title: '[bug] '
+labels: ['bug']
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 现象
+      description: 你看到什么，期望看到什么
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: 尽量给出可复现的输入，不要填真实个人信息
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: 影响范围
+      options:
+        - 首页
+        - 排盘页
+        - 排盘计算
+        - 合婚
+        - 发布与部署
+        - 其他
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 环境
+      placeholder: 浏览器与版本、屏幕宽度
+    validations:
+      required: false
