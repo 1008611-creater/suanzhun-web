@@ -249,3 +249,19 @@ Runbook 写 11 个上线文件（实际 13 个，且清单漏了两个样式表�
 | 改动     | README 契约数改为 41；Runbook 上线文件数改为 13 并补全清单；新增 ADR 0008                   |
 | 发布前   | `npm run release:check` 通过：lint + 格式 + 密钥扫描 51 文件 + 41 项契约 + 对比度 + 45 测试 |
 | 反向验证 | README 改回 23、Runbook 改回 11 时，验证脚本均以非零码退出并点名对应检查项                  |
+
+### 2026-09-18 0.11.0 图标族、可安装清单与表单提示
+
+`/favicon.ico` 一直返回 404，手机端无法「添加到主屏幕」；排盘表单用 `alert()` 做校验，
+打断读屏且无法样式化。本轮补齐图标族与 PWA 清单，并把校验换成页面内提示。
+
+| 项目     | 值                                                                                                                                         |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 备份     | `/srv/suanzhun/backups/20260918-073812`                                                                                                    |
+| 变更文件 | `index.html` `paipan.html` `404.html` `assets/site.css` `app.js` `sitemap.xml` + 6 个新资源                                                |
+| 新增资源 | `favicon.ico` `assets/icon-192.png` `assets/icon-512.png` `assets/icon-maskable-192.png` `assets/icon-maskable-512.png` `site.webmanifest` |
+| 基础设施 | `nginx.conf` 更新图标缓存与 manifest 类型后重建 `suanzhun-web`                                                                             |
+| 改动     | 图标族与清单由 `build-assets.mjs` 单点生成；表单校验改 `role="alert"` 行内提示；新增 LICENSE 与 ADR 0009                                   |
+| 发布前   | `npm run release:check` 通过：lint + 格式 + 密钥扫描 52 文件 + 47 项契约 + 对比度契约 + 49 项测试                                          |
+| 发布后   | 19 个文件哈希复核一致，18 个地址全部 200；manifest 为 `application/manifest+json` 一小时缓存，`.ico` 为 7 天                               |
+| 复核     | 三页 × 320/375/768/1280 无横向溢出、无障碍全绿；线上排盘 12 块卡片跑通、0 控制台报错                                                       |
