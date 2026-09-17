@@ -150,3 +150,16 @@ cp -a /srv/suanzhun/backups/<时间戳>/. /srv/suanzhun/public/
 | 改动       | 从 `suanzhun.cauai.fun` 块删除 `@html` / `@staticAssets` 两条 Cache-Control 规则，仅保留安全头与反代                                     |
 | 仓库改动   | `deploy/nginx.conf` 收敛缓存规则，HTML/JS/CSS 为 `no-cache`，图片与字体为 7 天                                                           |
 | 验证       | `caddy validate` 与 `caddy reload` 通过；`/bazi.js`、`/` 为单条 `no-cache`，`/og-image.png` 为单条 `public, max-age=604800`，gzip 仍生效 |
+
+### 2026-09-18 0.5.0 工程闸门与无障碍修复
+
+补齐推送前密钥扫描、本地预览测试、文档索引与无障碍关联。
+
+| 项目     | 值                                                                                    |
+| -------- | ------------------------------------------------------------------------------------- |
+| 备份     | `/srv/suanzhun/backups/20260918-001526`                                               |
+| 变更文件 | `paipan.html`（其余 10 个文件哈希一致，未上传）                                       |
+| 改动     | 排盘页 13 个表单控件补 `for` 关联；本地预览复刻线上缓存与 404；新增密钥扫描与文档索引 |
+| 发布前   | `npm run release:check` 通过：lint + 格式 + 密钥扫描 + 23 项契约 + 27 项测试          |
+| 发布后   | 13/13 控件有可读名称；375/1280px 无溢出、无控制台报错；实际排盘输出 1737 字           |
+| 复核     | `/` 与 `/paipan.html` 单条 `no-cache`；未知地址 404 且渲染自定义页                    |
