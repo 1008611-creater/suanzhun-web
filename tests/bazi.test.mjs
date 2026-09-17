@@ -161,3 +161,38 @@ test('晚子时：23 点后日柱进位到次日', () => {
   assert.equal(late[2], nextDay[2], '晚子时与次日子时日柱应一致');
   assert.equal(late[3], nextDay[3], '晚子时与次日子时时柱应一致');
 });
+
+test('流年：不传年数时默认一个完整甲子（60 年），且不依赖系统时间', () => {
+  const p = BaZi.paipan({ year: 1990, month: 6, day: 15, hour: 12, minute: 0, lng: 120, useTrueSolar: false });
+  assert.equal(p.liuNian.length, 60, '默认 60 年');
+  assert.equal(p.liuNian[0].year, 1991);
+  assert.equal(p.liuNian[59].year, 2050);
+});
+
+test('流年：早年生人可通过 liuNianYears 覆盖到当前年份之后', () => {
+  const nowY = new Date().getFullYear();
+  const birth = 1965;
+  const want = nowY + 10 - birth;
+  const p = BaZi.paipan({
+    year: birth,
+    month: 6,
+    day: 15,
+    hour: 12,
+    minute: 0,
+    lng: 120,
+    useTrueSolar: false,
+    liuNianYears: want,
+  });
+  assert.ok(p.liuNian.length >= want, '年数不少于请求值');
+  const last = p.liuNian[p.liuNian.length - 1].year;
+  assert.ok(last >= nowY, `最后一年 ${last} 应覆盖当前年份 ${nowY}`);
+  const hasNow = p.liuNian.some((x) => x.year === nowY);
+  assert.ok(hasNow, '包含当前年份');
+});
+
+test('流年：小于 60 的请求仍被夹到下限 60，非法值回退 60', () => {
+  const base = { year: 2000, month: 6, day: 15, hour: 12, minute: 0, lng: 120, useTrueSolar: false };
+  assert.equal(BaZi.paipan(Object.assign({}, base, { liuNianYears: 10 })).liuNian.length, 60);
+  assert.equal(BaZi.paipan(Object.assign({}, base, { liuNianYears: -5 })).liuNian.length, 60);
+  assert.equal(BaZi.paipan(Object.assign({}, base, { liuNianYears: 'abc' })).liuNian.length, 60);
+});

@@ -22,7 +22,13 @@ export default [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'script',
-      globals: { window: 'readonly', document: 'readonly', alert: 'readonly' },
+      globals: {
+        window: 'readonly',
+        document: 'readonly',
+        alert: 'readonly',
+        navigator: 'readonly',
+        setTimeout: 'readonly',
+      },
     },
     rules: {
       'no-unused-vars': ['warn', { args: 'none' }],

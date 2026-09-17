@@ -138,6 +138,34 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 .footer{text-align:center;color:var(--dim2);font-size:11px;margin-top:34px;letter-spacing:.1em;line-height:2}
+
+/* 结果页收尾：把「看完就走」接成可保存、可联系 */
+.card.next{border-color:oklch(78% .10 350);background:linear-gradient(180deg,oklch(97% .045 350 / .92),var(--card2))}
+.next-lead{color:var(--dim);font-size:13.5px;line-height:1.95;margin-bottom:16px}
+.next-lead b{color:var(--gold2);font-weight:600}
+.wx{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 15px;border:1px dashed var(--line);
+  border-radius:12px;background:oklch(100% .005 350 / .6)}
+.wx-label{font-size:12px;color:var(--dim2);letter-spacing:.14em}
+.wx-id{font-size:19px;font-weight:700;color:var(--gold2);letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.btn-copy{margin-left:auto;background:transparent;border:1px solid var(--line);color:var(--dim);border-radius:8px;
+  padding:9px 14px;font-size:12.5px;min-height:44px}
+.btn-copy:hover{border-color:var(--gold);color:var(--gold2)}
+.next-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+.next-actions .btn-main,.next-actions .btn-ghost{margin:0}
+
+/* 打印：只留报告本体，去掉背景纹理与交互控件，方便存 PDF 或发给别人 */
+@media print{
+  body{background:#fff;padding:0;color:#000}
+  .hero,.card:not(#result .card),#result > .card.next{display:none!important}
+  .card,#result{display:block!important;box-shadow:none;border:1px solid #ddd;background:#fff;
+    break-inside:avoid;page-break-inside:avoid;backdrop-filter:none}
+  .card h2{color:#000}
+  .pil,.bz,.ge .g1{background:#fff!important;border-color:#bbb}
+  .pil .pos,.pil .cang,.bz .dir,.bz .deg,.ge .n,.ge .txt{color:#333!important}
+  .pil .gz,.ge .num,.bz .star{color:#000!important;-webkit-text-fill-color:#000;background:none}
+  .footer{display:block;margin-top:18px}
+  @page{margin:14mm}
+}
 </style>
 </head>
 <body>

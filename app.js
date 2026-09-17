@@ -165,7 +165,10 @@
   }
 
   function calc(opt) {
-    var p = B.paipan(opt);
+    // 流年表需要覆盖到当前年份之后：早年生人（例如 1965）默认 60 年不够用。
+    // 年数由调用方按「当前年份 + 10 - 出生年」算好后传入，引擎只保证下限 60。
+    var wantYears = new Date().getFullYear() + 10 - opt.year;
+    var p = B.paipan(Object.assign({}, opt, { liuNianYears: Math.max(60, wantYears) }));
     p.ws = A.wangShuai(p);
     p.gua = A.mingGua(opt.year, opt.gender);
     p.bazhai = A.baZhai(p.gua.gua);
@@ -378,7 +381,10 @@
 
     /* --- 5. 流年 --- */
     var c5 = el('div', 'card');
-    c5.appendChild(el('h2', null, '流年运势（2026 – 2035）'));
+    // 流年窗口必须跟着当前年份走。写死年份会让早年生人的表整块空白。
+    var lnStart = nowYear,
+      lnEnd = nowYear + 9;
+    c5.appendChild(el('h2', null, '流年运势（' + lnStart + ' – ' + lnEnd + '）'));
     var t2 = el('table');
     var h2 = '<tr><th>年份</th><th>干支</th><th>十神</th><th>虚岁</th><th>吉凶</th><th>简评</th></tr>';
     var LN_MEAN = {
@@ -395,7 +401,7 @@
     };
     p.liuNian
       .filter(function (x) {
-        return x.year >= 2026 && x.year <= 2035;
+        return x.year >= lnStart && x.year <= lnEnd;
       })
       .forEach(function (x) {
         var r = A.rateLuck(x.gan, x.zhi, ws);
@@ -587,6 +593,66 @@
       );
       box.appendChild(c8);
     }
+
+    /* --- 9. 下一步：把「看完就走」接成可保存、可联系 --- */
+    // 结果页原先在最后一块分析后直接进页脚，用户没有任何下一步动作。
+    // 这里补上保存（打印）与联系方式，对应 PRD 核心路径第 5 步。
+    var cNext = el('div', 'card next');
+    cNext.appendChild(el('h2', null, '下一步'));
+    cNext.appendChild(
+      el(
+        'p',
+        'next-lead',
+        '这份排盘给出的是<b>结构</b>，不是结论。想结合你的实际情况逐条拆解，可以加微信先做<b>前事验证</b>——先看已经发生的事，验不准不收钱。'
+      )
+    );
+    var wx = el('div', 'wx');
+    wx.appendChild(el('span', 'wx-label', '微信'));
+    wx.appendChild(el('span', 'wx-id', 'ANS_0912'));
+    var copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'btn-copy';
+    copyBtn.textContent = '复制微信号';
+    copyBtn.addEventListener('click', function () {
+      var done = function () {
+        copyBtn.textContent = '已复制';
+        setTimeout(function () {
+          copyBtn.textContent = '复制微信号';
+        }, 2000);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText('ANS_0912').then(done, function () {
+          copyBtn.textContent = '请手动复制';
+        });
+      } else {
+        copyBtn.textContent = '请手动复制';
+      }
+    });
+    wx.appendChild(copyBtn);
+    cNext.appendChild(wx);
+    var nbtns = el('div', 'next-actions');
+    var bPrint = document.createElement('button');
+    bPrint.type = 'button';
+    bPrint.className = 'btn-main';
+    bPrint.textContent = '保存 / 打印报告';
+    bPrint.addEventListener('click', function () {
+      window.print();
+    });
+    var bBack = document.createElement('button');
+    bBack.type = 'button';
+    bBack.className = 'btn-ghost';
+    bBack.textContent = '修改信息重排';
+    bBack.addEventListener('click', function () {
+      var nameEl = $('name');
+      if (nameEl) {
+        nameEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        nameEl.focus({ preventScroll: true });
+      }
+    });
+    nbtns.appendChild(bPrint);
+    nbtns.appendChild(bBack);
+    cNext.appendChild(nbtns);
+    box.appendChild(cNext);
 
     box.scrollIntoView({ behavior: 'smooth', block: 'start' });
     box.setAttribute('aria-busy', 'false');
