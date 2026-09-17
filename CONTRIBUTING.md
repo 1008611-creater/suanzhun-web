@@ -17,7 +17,8 @@ npm run release:check
 
 ## 发布规则
 
-- 发布前创建 `/srv/suanzhun/backups/<timestamp>`。
-- 只上传明确变更文件。
-- 发布后检查首页、排盘页、`app.js`、`analysis.js`、`bazi.js` 状态码。
-- 若视觉或交互明显变差，立即回滚到最近备份。
+- 发布统一走 `npm run deploy`，不要手工拼 scp 命令。
+- 正式发布前先跑 `npm run deploy -- --dry-run` 确认差异清单。
+- 脚本会自动创建 `/srv/suanzhun/backups/<timestamp>` 并只上传哈希不同的文件。
+- 发布后仍需在真实浏览器确认视觉与交互；脚本只保证文件与状态码。
+- 若视觉或交互明显变差，按 [docs/RELEASE-RUNBOOK.md](docs/RELEASE-RUNBOOK.md) 回滚到对应时间戳备份。
