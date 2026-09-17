@@ -31,8 +31,19 @@ function cacheControl(pathname) {
   return null;
 }
 
+/**
+ * 站点没有任何内联脚本、eval、iframe、表单或外部资源，所以脚本可以完全禁掉内联。
+ * 样式仍有 <style> 块与 style 属性，因此 style-src 保留 'unsafe-inline'。
+ * 这份策略必须与 deploy/nginx.conf 中的字符串逐字一致，测试会锁死，避免两边漂移。
+ */
+export const CSP =
+  "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; " +
+  "object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+  "img-src 'self'; font-src 'self'; connect-src 'none'; manifest-src 'self'; " +
+  'upgrade-insecure-requests';
+
 export function send(res, status, type, body, pathname) {
-  const headers = { 'content-type': type };
+  const headers = { 'content-type': type, 'content-security-policy': CSP };
   const cache = cacheControl(pathname);
   if (cache) headers['cache-control'] = cache;
   res.writeHead(status, headers).end(body);

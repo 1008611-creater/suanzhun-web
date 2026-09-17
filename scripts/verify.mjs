@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
+import { CSP } from './serve.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const required = [
@@ -24,6 +25,7 @@ const required = [
   'docs/adr/0001-cache-headers-single-owner.md',
   'docs/adr/0002-secret-scan-before-push.md',
   'docs/adr/0003-result-contrast-token-contract.md',
+  'docs/adr/0004-csp-single-owner-and-input-escaping.md',
   'scripts/secret-scan.mjs',
   'scripts/check-contrast.mjs',
   'tests/preview.test.mjs',
@@ -93,6 +95,31 @@ const cacheDrift = CACHE_POLICY.filter(
 const hasLongCache = /max-age=604800/u.test(nginx) && /max-age=604800/u.test(serve);
 const hasShortCache = /max-age=3600/u.test(nginx) && /max-age=3600/u.test(serve);
 
+/**
+ * CSP 同时写在 Nginx 配置和本地预览服务器里。两处一旦漂移，
+ * 「本地通过、线上失效」就会重新出现，所以在这里逐字锁死。
+ * 另外 Nginx 的 add_header 不继承：每个设置了 Cache-Control 的 location
+ * 都必须自己再写一遍 CSP，否则 HTML/JS/CSS 这些最需要 CSP 的响应反而没有。
+ */
+const cspValues = [...nginx.matchAll(/add_header\s+Content-Security-Policy\s+([^;\n]+?)\s+always;/giu)].map((m) =>
+  m[1].trim()
+);
+const cspFromVar = [...nginx.matchAll(/set\s+\$csp\s+"([^"]+)"/giu)].map((m) => m[1]);
+const cspLiterals = cspValues.filter((v) => v !== '$csp');
+const cspAllMatchServe = cspLiterals.every((v) => v === CSP) && cspFromVar.length === 1 && cspFromVar[0] === CSP;
+const cacheLocations = (nginx.match(/location[^{]*\{[^}]*add_header\s+Cache-Control/giu) || []).length;
+const cspLocations = (nginx.match(/location[^{]*\{[^}]*add_header\s+Content-Security-Policy/giu) || []).length;
+
+/**
+ * 姓名等输入会拼进 innerHTML，必须经过转义。
+ * 这里锁定 esc() 辅助函数存在，且关键拼接点都用了它，防止有人删掉转义。
+ */
+const appJs = readFileSync(resolve(root, 'app.js'), 'utf8');
+const hasEscHelper = /function\s+esc\s*\(/u.test(appJs);
+const escapesUserName = /kv\(\s*['"]姓名['"]\s*,\s*esc\(/u.test(appJs);
+const escapesUnknown = /esc\(\(n5\.unknown/u.test(appJs);
+const escapesNotes = /n5\.notes\.map\(esc\)/u.test(appJs);
+
 const checks = [
   ['home links to paipan', /href=["']paipan\.html/iu.test(home)],
   ['paipan loads bazi', /<script[^>]+src=["']bazi\.js/iu.test(paipan)],
@@ -123,6 +150,10 @@ const checks = [
   ['排盘结果区对读屏可播报', /id=["']result["'][^>]*aria-live=["']polite["']/iu.test(paipan)],
   ['文档索引指向的文件都存在', indexMissing.length === 0],
   ['所有 ADR 都登记进索引', adrUnlisted.length === 0],
+  ['CSP 在 Nginx 与本地预览逐字一致', cspAllMatchServe],
+  ['每个设置缓存的 location 都带 CSP（Nginx add_header 不继承）', cspLocations >= cacheLocations && cacheLocations > 0],
+  ['姓名等输入经 esc() 转义', hasEscHelper && escapesUserName && escapesUnknown && escapesNotes],
+  ['页面声明 CSP 兼容结构（无内联脚本）', !/<script(?![^>]*\bsrc=)[^>]*>/iu.test(home + paipan)],
 ];
 const failures = checks.filter(([, ok]) => !ok).map(([name]) => name);
 if (failures.length) {
