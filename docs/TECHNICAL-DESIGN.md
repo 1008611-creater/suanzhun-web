@@ -8,6 +8,8 @@
 - 架构：无构建步骤的静态 HTML/CSS/JavaScript
 - 计算模块：`bazi.js`、`analysis.js`
 - 页面模块：`index.html`、`paipan.html`、`app.js`
+- 设计令牌：`assets/tokens.css`（全站唯一取值来源）；组件样式：`assets/site.css`
+- 图标与清单：`favicon.svg` / `favicon.ico` / `apple-touch-icon.png` / `assets/icon-*.png` / `site.webmanifest`（由 `scripts/build-assets.mjs` 生成）
 
 ## 选择的工作栈
 

@@ -28,7 +28,7 @@ npm test               # 排盘引擎回归测试
 npm run release:check  # 以上全部串行执行
 ```
 
-`npm run check` 目前包含 42 项契约：核心文件存在、脚本语法、页面脚本引用、SEO 元信息、
+`npm run check` 目前包含 47 项契约：核心文件存在、脚本语法、页面脚本引用、SEO 元信息、
 无障碍（控件可读名称、语言、标题层级、结果区播报）、缓存策略在 Nginx 与本地预览之间一致、
 gzip 与 404 兜底，以及文档索引与 ADR 登记一致性。
 
@@ -41,6 +41,8 @@ npm run assets   # 重新生成 favicon.svg / apple-touch-icon.png / og-image.pn
 ```
 
 图标与分享卡片由 `scripts/build-assets.mjs` 生成，产物已提交进仓库；只有调整品牌视觉时才需要重跑。
+同一条命令还会产出 `favicon.ico`（16/32/48）、`assets/icon-192.png`、`assets/icon-512.png`、
+maskable 两个尺寸与 `site.webmanifest`，三个页面统一引用，手机可「添加到主屏幕」。
 
 ## 发布
 
@@ -85,3 +87,7 @@ deploy/          服务器上的 Nginx 与 Compose 定义
 - Web 容器：`suanzhun-web`
 - 基础设施：`/srv/suanzhun/nginx.conf` 与 `/srv/suanzhun/docker-compose.yml`，由仓库 `deploy/` 同步
 - 发布前必须保留远端备份，并完成 `npm run release:check`。
+
+## 许可
+
+私有项目，版权归权利人所有，未经书面许可不得复制、商用或再发布。详见 [LICENSE](LICENSE)。

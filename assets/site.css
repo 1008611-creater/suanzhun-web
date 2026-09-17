@@ -640,6 +640,18 @@ button {
 .hint-spaced {
   margin-top: var(--s-4);
 }
+/* 表单校验提示：取代 alert，读屏通过 role="alert" 播报，视觉用浅底强调色 */
+.form-alert {
+  grid-column: 1/-1;
+  margin: var(--s-3) 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--xiong-ink);
+  border-radius: var(--r-sm);
+  background-color: var(--card2);
+  color: var(--xiong-strong-ink);
+  font-size: 13px;
+  line-height: 1.7;
+}
 
 /* ============ 12. 结果页组件 ============ */
 #result {
