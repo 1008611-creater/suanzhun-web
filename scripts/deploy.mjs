@@ -110,15 +110,17 @@ function remoteHashes() {
   return map;
 }
 
-async function probe(urls) {
+async function probe(urls, { expectMissing = [] } = {}) {
   const failures = [];
   for (const path of urls) {
     const target = BASE_URL + path;
     try {
       const res = await globalThis.fetch(target, { redirect: 'follow' });
       const ok = res.status === 200;
-      console.log('  ' + (ok ? 'OK  ' : 'FAIL') + ' ' + res.status + ' ' + target);
-      if (!ok) failures.push(path + ' -> ' + res.status);
+      const pending = !ok && expectMissing.includes(path);
+      const label = ok ? 'OK  ' : pending ? '待传' : 'FAIL';
+      console.log('  ' + label + ' ' + res.status + ' ' + target);
+      if (!ok && !pending) failures.push(path + ' -> ' + res.status);
     } catch (error) {
       console.log('  FAIL --- ' + target);
       failures.push(path + ' -> ' + error.message);
@@ -244,11 +246,19 @@ async function main() {
   }
 
   step('线上探活');
-  const failures = await probe(URLS);
+  // dry-run 时新文件还没上传，404 属于预期状态，不计为失败。
+  const expectMissing = dryRun
+    ? URLS.filter((path) => {
+        const file = path === '/' ? 'index.html' : path.replace(/^\//, '');
+        return !remote.has(file) || remote.get(file) === 'MISSING';
+      })
+    : [];
+  const failures = await probe(URLS, { expectMissing });
   if (failures.length) throw new Error('探活失败：' + failures.join('; '));
 
   const label = dryRun ? '[dry-run] 检查' : '发布';
-  console.log(LF + label + '完成：' + FILES.length + ' 个文件，' + URLS.length + ' 个地址全部 200');
+  const pendingNote = expectMissing.length ? '，' + expectMissing.length + ' 个待上传地址暂返回 404' : '';
+  console.log(LF + label + '完成：' + FILES.length + ' 个文件，' + URLS.length + ' 个地址可用' + pendingNote);
 }
 
 main().catch((error) => {
