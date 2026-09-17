@@ -57,6 +57,29 @@ npm run deploy -- --with-infra             # 同步并重建容器
 
 改这两个文件属于基础设施变更，按 L3 处理：先备份、先 dry-run、确认后再执行。
 
+## 上层 Caddy 与缓存归属
+
+本站在 Caddy 后面再挂一层 Nginx。Caddy 配置不在本仓库里，它属于
+`deeptutor-public` 项目：
+
+```text
+/srv/kidswear-data/staging/deeptutor-public-20260804-ui-hardening-01/deploy/public/Caddyfile
+```
+
+约定：**缓存响应头只在 Nginx 一处声明**，Caddy 的 `suanzhun.cauai.fun` 块只保留 TLS、
+安全响应头与 `reverse_proxy`。两层都设 `Cache-Control` 会让同一条响应出现互相冲突的两个头，
+浏览器行为取决于实现，属于必须避免的隐患。
+
+改动 Caddyfile 前先备份为 `Caddyfile.bak-<日期>-<原因>`，改完依次执行：
+
+```bash
+docker exec deeptutor-public-caddy caddy validate --config /etc/caddy/Caddyfile
+docker exec deeptutor-public-caddy caddy reload --config /etc/caddy/Caddyfile
+```
+
+`validate` 与 `reload` 都通过后，用 `curl -sI` 复核 HTML/JS 为单条 `no-cache`、
+图片为单条 `public, max-age=604800`，并确认 gzip 仍生效。
+
 ## 发布后人工确认
 
 脚本只保证「文件到位、地址可访问」。视觉与交互仍要在真实浏览器里看一眼：
@@ -109,8 +132,21 @@ cp -a /srv/suanzhun/backups/<时间戳>/. /srv/suanzhun/public/
 
 补齐图标、分享卡片、SEO 元信息、404 页，并把容器纳入 compose 管理。
 
-| 项目     | 值                                                       |
-| -------- | -------------------------------------------------------- |
-| 备份     | 发布时记录 `/srv/suanzhun/backups/<时间戳>`              |
-| 变更文件 | 新增 favicon / apple-touch-icon / og-image / 404.html 等 |
-| 发布后   | 待填：375/1280px 无溢出，新增资源地址全部 200            |
+| 项目     | 值                                                                        |
+| -------- | ------------------------------------------------------------------------- |
+| 备份     | `/srv/suanzhun/backups/20260917-194249`                                   |
+| 变更文件 | 11 个上线文件；新增 favicon / apple-touch-icon / og-image / 404.html 等   |
+| 基础设施 | 容器改由 `docker compose` 管理，容器名仍为 `suanzhun-web`                 |
+| 发布后   | 11 个文件哈希复核一致，10 个地址全部 200，375/1280px 无溢出、无控制台报错 |
+
+### 2026-09-17 0.4.1 缓存归属修正
+
+线上发现 Caddy 与 Nginx 同时设置 `Cache-Control`，同一条响应出现两个冲突的头
+（JS/CSS 被标成 7 天缓存，又被标成 `no-cache`）。修正为缓存只在 Nginx 一处声明。
+
+| 项目       | 值                                                                                                                                       |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Caddy 备份 | `/srv/kidswear-data/staging/deeptutor-public-20260804-ui-hardening-01/deploy/public/Caddyfile.bak-20260917-cache-owner`                  |
+| 改动       | 从 `suanzhun.cauai.fun` 块删除 `@html` / `@staticAssets` 两条 Cache-Control 规则，仅保留安全头与反代                                     |
+| 仓库改动   | `deploy/nginx.conf` 收敛缓存规则，HTML/JS/CSS 为 `no-cache`，图片与字体为 7 天                                                           |
+| 验证       | `caddy validate` 与 `caddy reload` 通过；`/bazi.js`、`/` 为单条 `no-cache`，`/og-image.png` 为单条 `public, max-age=604800`，gzip 仍生效 |
