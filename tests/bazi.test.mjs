@@ -90,11 +90,18 @@ test('八宅：生气与绝命唯一且方位齐全', () => {
   assert.equal(bz.list.filter((x) => x.star === '绝命').length, 1);
 });
 
-test('姓名五格：匿名 康熙笔画与五格', () => {
-  const n5 = MingLi.wuGe('匿名');
+test('姓名五格：三字姓名康熙笔画与五格', () => {
+  const n5 = MingLi.wuGe('李思远');
   assert.ok(n5.ok);
-  assert.equal(n5.bi.join(','), '15,17,14');
-  assert.equal(JSON.stringify(n5.ge), JSON.stringify({ 天格: 16, 人格: 32, 地格: 31, 外格: 15, 总格: 46 }));
+  assert.equal(n5.bi.join(','), '7,9,17');
+  assert.equal(JSON.stringify(n5.ge), JSON.stringify({ 天格: 8, 人格: 16, 地格: 26, 外格: 18, 总格: 33 }));
+});
+
+test('姓名五格：两字姓名外格固定为 2', () => {
+  const n5 = MingLi.wuGe('张伟');
+  assert.ok(n5.ok);
+  assert.equal(n5.bi.join(','), '11,11');
+  assert.equal(JSON.stringify(n5.ge), JSON.stringify({ 天格: 12, 人格: 22, 地格: 12, 外格: 2, 总格: 22 }));
 });
 
 test('姓名五格：未收录字形返回 ok:false 而非抛错', () => {

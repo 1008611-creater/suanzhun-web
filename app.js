@@ -102,30 +102,42 @@
   };
   (function initCity() {
     var sel = $('city');
+    var ph = document.createElement('option');
+    ph.value = '';
+    ph.textContent = '请选择出生地';
+    sel.appendChild(ph);
     CITY.forEach(function (c, i) {
       var o = document.createElement('option');
       o.value = i;
       o.textContent = c[0];
       sel.appendChild(o);
     });
-    sel.value = 0;
+    var defIdx = 0;
+    CITY.forEach(function (c, i) {
+      if (c[0] === '北京') defIdx = i;
+    });
+    sel.value = String(defIdx);
+    if (CITY[defIdx][1] !== null) $('lng').value = CITY[defIdx][1];
     sel.addEventListener('change', function () {
       var c = CITY[sel.value];
+      if (!c) return;
       if (c[1] !== null) $('lng').value = c[1];
       else $('lng').focus();
     });
   })();
 
   /* ---------- 主流程 ---------- */
-  function readForm(prefix) {
+  function readForm(prefix, fallbackLng) {
     var p = prefix ? prefix : '';
+    var fallback = isFinite(fallbackLng) ? fallbackLng : 120;
     var dstr = $(p + 'date').value;
     var tstr = $(p + 'time').value;
     if (!dstr || !tstr) return null;
     var dp = dstr.split('-'),
       tp = tstr.split(':');
-    var lng = $(p + 'lng') ? Number($(p + 'lng').value) : 120;
-    if (!isFinite(lng)) lng = 120;
+    var rawLng = $(p + 'lng') ? $(p + 'lng').value.trim() : '';
+    var lng = rawLng === '' ? fallback : Number(rawLng);
+    if (!isFinite(lng) || lng < -180 || lng > 180) lng = fallback;
     return {
       name: $(p + 'name').value || '无名',
       gender: $(p + 'gender').value,
@@ -567,13 +579,13 @@
 
   /* ---------- 事件 ---------- */
   function run() {
-    var opt = readForm('');
+    var opt = readForm('', 120);
     if (!opt) {
       alert('请填写完整的出生日期与时间');
       return;
     }
     var p = calc(opt);
-    var po = readForm('p_');
+    var po = readForm('p_', opt.lng);
     if (po && po.year && document.getElementById('partnerBox').style.display !== 'none') {
       var q = calc(po);
       p.partner = q;
@@ -586,6 +598,10 @@
     $('name').value = '';
     $('date').value = '';
     $('time').value = '';
+    $('p_name').value = '';
+    $('p_date').value = '';
+    $('p_time').value = '';
+    $('p_lng').value = '';
     $('result').style.display = 'none';
     $('result').innerHTML = '';
   });
