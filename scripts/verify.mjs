@@ -49,6 +49,7 @@ for (const file of ['app.js', 'analysis.js', 'bazi.js']) {
 
 const home = readFileSync(resolve(root, 'index.html'), 'utf8');
 const paipan = readFileSync(resolve(root, 'paipan.html'), 'utf8');
+const notFound = readFileSync(resolve(root, '404.html'), 'utf8');
 const nginx = readFileSync(resolve(root, 'deploy/nginx.conf'), 'utf8');
 const serve = readFileSync(resolve(root, 'scripts/serve.mjs'), 'utf8');
 const siteCss = readFileSync(resolve(root, 'assets/site.css'), 'utf8');
@@ -151,6 +152,15 @@ const pagesLinkSite = /assets\/site\.css/u.test(home) && /assets\/site\.css/u.te
 const tokensHaveRoot = /:root\s*\{/u.test(tokensCss);
 
 /**
+ * 三页的品牌主题色应当一致：手机浏览器地址栏会用它着色。
+ * 曾经只有首页和排盘页写了 theme-color，404 页漏掉，手机上会闪出另一种底色。
+ */
+const themeColors = [home, paipan, notFound].map(
+  (html) => (html.match(/name=["']theme-color["'][^>]*content=["']([^"']+)["']/iu) || [])[1]
+);
+const themeColorConsistent = themeColors.every((c) => c && c === themeColors[0]);
+
+/**
  * 行动建议引擎：事业、婚姻、八宅落地、姓名优选四块都要真的接进结果页。
  * 引擎新增了函数但界面没调用，是「写了但用户看不到」的典型漂移，这里锁死两端。
  */
@@ -231,6 +241,7 @@ const checks = [
   ['事业与婚姻接收 nowYear 而非读系统时间', adviceTakesNowYear && !engineReadsClock],
   ['行动建议带免责说明', adviceHasDisclaimer],
   ['页面声明 CSP 兼容结构（无内联脚本）', !/<script(?![^>]*\bsrc=)[^>]*>/iu.test(home + paipan)],
+  ['三页 theme-color 一致', themeColorConsistent],
 ];
 /* 这三项依赖最终总数，先算好总数再追加，避免在数组字面量里引用自身。 */
 const totalChecks = checks.length + 3;
