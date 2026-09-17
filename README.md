@@ -22,10 +22,17 @@ npm run serve
 ```powershell
 npm run lint           # ESLint
 npm run format:check   # Prettier 校验
+npm run secret-scan    # 明文凭据扫描
 npm run check          # 结构与契约校验
 npm test               # 排盘引擎回归测试
 npm run release:check  # 以上全部串行执行
 ```
+
+`npm run check` 目前包含 23 项契约：核心文件存在、脚本语法、页面脚本引用、SEO 元信息、
+无障碍（控件可读名称、语言、标题层级、结果区播报）、缓存策略在 Nginx 与本地预览之间一致、
+gzip 与 404 兜底，以及文档索引与 ADR 登记一致性。
+
+文档导航见 [docs/INDEX.md](docs/INDEX.md)，历史决策见 [docs/adr/](docs/adr/)。
 
 ## 站点资源
 
@@ -47,6 +54,9 @@ npm run deploy                # 正式发布
 检查内容包括：核心文件存在、JavaScript 语法、页面脚本引用、关键入口、响应式与减少动效标记、排盘真值与合婚输出边界。
 
 HTML 页面为手工排版，已在 `.prettierignore` 中排除，避免格式化破坏既有布局。
+
+本地预览 `npm run serve` 复刻线上的缓存与 404 行为，因此本地看到的现象与线上一致，
+这两处的一致性由 `npm run check` 锁死。
 
 ## 文件约定
 

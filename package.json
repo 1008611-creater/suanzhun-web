@@ -1,6 +1,6 @@
 {
   "name": "suanzhun-web",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "private": true,
   "description": "算的准：传统命理文化参考工具",
   "type": "module",
@@ -12,8 +12,9 @@
     "serve": "node scripts/serve.mjs",
     "assets": "node scripts/build-assets.mjs",
     "deploy": "node scripts/deploy.mjs",
+    "secret-scan": "node scripts/secret-scan.mjs",
     "test": "node --test tests/*.test.mjs",
-    "release:check": "npm run lint && npm run check && npm test"
+    "release:check": "npm run lint && npm run format:check && npm run secret-scan && npm run check && npm test"
   },
   "engines": {
     "node": ">=20"

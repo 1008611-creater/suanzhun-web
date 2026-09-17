@@ -144,13 +144,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
   <div class="card">
     <h2>命主信息</h2>
     <div class="form">
-      <div class="f"><label>姓名</label><input id="name" placeholder="请输入姓名" autocomplete="off"></div>
-      <div class="f"><label>性别</label><select id="gender"><option>男</option><option>女</option></select></div>
-      <div class="f"><label>出生日期（公历）</label><input id="date" type="date"></div>
-      <div class="f"><label>出生时间</label><input id="time" type="time"></div>
-      <div class="f wide"><label>出生地</label><select id="city"></select></div>
-      <div class="f"><label>经度（可改）</label><input id="lng" inputmode="decimal" placeholder="选择出生地后自动填入"></div>
-      <div class="f"><label>时制</label><select id="ts"><option value="1">真太阳时（推荐）</option><option value="0">钟表时间</option></select></div>
+      <div class="f"><label for="name">姓名</label><input id="name" placeholder="请输入姓名" autocomplete="off"></div>
+      <div class="f"><label for="gender">性别</label><select id="gender"><option>男</option><option>女</option></select></div>
+      <div class="f"><label for="date">出生日期（公历）</label><input id="date" type="date"></div>
+      <div class="f"><label for="time">出生时间</label><input id="time" type="time"></div>
+      <div class="f wide"><label for="city">出生地</label><select id="city"></select></div>
+      <div class="f"><label for="lng">经度（可改）</label><input id="lng" inputmode="decimal" placeholder="选择出生地后自动填入"></div>
+      <div class="f"><label for="ts">时制</label><select id="ts"><option value="1">真太阳时（推荐）</option><option value="0">钟表时间</option></select></div>
       <div class="actions">
         <button class="btn-main" id="go">开始排盘</button>
         <button class="btn-ghost" id="demo">合婚：填入对方</button>
@@ -163,12 +163,12 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
   <div class="card" id="partnerBox" style="display:none">
     <h2>合婚对象（可选）</h2>
     <div class="form">
-      <div class="f"><label>姓名</label><input id="p_name" placeholder="对方姓名" autocomplete="off"></div>
-      <div class="f"><label>性别</label><select id="p_gender"><option>女</option><option>男</option></select></div>
-      <div class="f"><label>出生日期（公历）</label><input id="p_date" type="date"></div>
-      <div class="f"><label>出生时间</label><input id="p_time" type="time"></div>
-      <div class="f wide"><label>出生地经度</label><input id="p_lng" inputmode="decimal" placeholder="留空则沿用主盘经度"></div>
-      <div class="f"><label>时制</label><select id="p_ts"><option value="1">真太阳时</option><option value="0">钟表时间</option></select></div>
+      <div class="f"><label for="p_name">姓名</label><input id="p_name" placeholder="对方姓名" autocomplete="off"></div>
+      <div class="f"><label for="p_gender">性别</label><select id="p_gender"><option>女</option><option>男</option></select></div>
+      <div class="f"><label for="p_date">出生日期（公历）</label><input id="p_date" type="date"></div>
+      <div class="f"><label for="p_time">出生时间</label><input id="p_time" type="time"></div>
+      <div class="f wide"><label for="p_lng">出生地经度</label><input id="p_lng" inputmode="decimal" placeholder="留空则沿用主盘经度"></div>
+      <div class="f"><label for="p_ts">时制</label><select id="p_ts"><option value="1">真太阳时</option><option value="0">钟表时间</option></select></div>
     </div>
     <div class="hint" style="margin-top:14px">填好后点「开始排盘」，页面底部会多出一块合婚分析。</div>
   </div>
