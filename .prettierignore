@@ -1,0 +1,9 @@
+# Hand-authored pages: keep intentional layout and inline structure.
+*.html
+
+node_modules/
+coverage/
+dist/
+backups/
+package-lock.json
+*.log

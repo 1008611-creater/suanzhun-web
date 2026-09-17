@@ -11,20 +11,25 @@
 需要 Node.js 20+。静态预览可使用任意静态服务器，例如：
 
 ```powershell
-npx serve .
+npm install
+npm run serve
 ```
 
-不需要安装前端框架或数据库。
+默认地址为 <http://localhost:4173/>，可用 `PORT` 环境变量改端口。不需要前端框架或数据库。
 
 ## 质量检查
 
 ```powershell
-npm run check
-npm test
-npm run release:check
+npm run lint           # ESLint
+npm run format:check   # Prettier 校验
+npm run check          # 结构与契约校验
+npm test               # 排盘引擎回归测试
+npm run release:check  # 以上全部串行执行
 ```
 
-检查内容包括：核心文件存在、JavaScript 语法、页面脚本引用、关键入口、响应式与减少动效标记。
+检查内容包括：核心文件存在、JavaScript 语法、页面脚本引用、关键入口、响应式与减少动效标记、排盘真值与合婚输出边界。
+
+HTML 页面为手工排版，已在 `.prettierignore` 中排除，避免格式化破坏既有布局。
 
 ## 文件约定
 
@@ -36,6 +41,7 @@ bazi.js          历法与四柱计算
 analysis.js      五行、八宅、姓名和合婚分析
 scripts/         本地质量与发布前检查
 tests/           无网络的回归测试
+tests/helpers/   在 Node 中加载浏览器端 UMD 模块的测试夹具
 docs/            PRD、架构、发布和审计文档
 ```
 

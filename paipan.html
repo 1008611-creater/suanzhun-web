@@ -11,6 +11,10 @@
   --line:oklch(86% .055 350); --gold:oklch(68% .12 20); --gold2:oklch(50% .15 350); --jade:oklch(60% .09 165);
   --ink:oklch(28% .035 345); --dim:oklch(48% .045 345); --dim2:oklch(68% .035 345);
   --mu:#4caf7d; --huo:#e0605c; --tu:#c8a45c; --jin:#d6d9e6; --shui:#5a93dd;
+  --xiong:#e08080; --xiong-strong:#ff8a8a;
+  --wx-mu:#4caf7d; --wx-huo:#e0605c; --wx-tu:#c8a45c; --wx-jin:#c3c8d8; --wx-shui:#5a93dd;
+  --wx-mu-soft:rgba(76,175,125,.4); --wx-huo-soft:rgba(224,96,92,.4); --wx-tu-soft:rgba(200,164,92,.4);
+  --wx-jin-soft:rgba(195,200,216,.4); --wx-shui-soft:rgba(90,147,221,.4);
 }
 *{box-sizing:border-box;margin:0;padding:0}html{overflow-x:clip}
 body{
@@ -48,7 +52,7 @@ button{font-family:inherit;cursor:pointer;border:none;border-radius:10px;font-si
 .btn-ghost:hover{border-color:var(--gold);color:var(--gold2)}
 
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:860px){.form{grid-template-columns:1fr 1fr}.f.wide{grid-column:span 2}.grid2{grid-template-columns:1fr}}
+@media(max-width:860px){.form{grid-template-columns:1fr 1fr}.f.wide{grid-column:1/-1}.actions{grid-column:1/-1}.grid2{grid-template-columns:1fr}}
 
 /* 四柱 */
 .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
@@ -79,8 +83,8 @@ tr.now{background:rgba(200,164,92,.10)}
 tr.now td{color:var(--gold2);font-weight:600}
 .tag{display:inline-block;font-size:11px;padding:1px 9px;border-radius:20px;border:1px solid var(--line);color:var(--dim)}
 .tag.j{color:var(--jade);border-color:rgba(79,179,163,.4);background:rgba(79,179,163,.08)}
-.tag.x{color:#e08080;border-color:rgba(224,128,128,.35);background:rgba(224,128,128,.07)}
-.tag.dx{color:#ff9a9a;border-color:rgba(255,120,120,.5);background:rgba(255,120,120,.12)}
+.tag.x{color:var(--xiong);border-color:rgba(224,128,128,.35);background:rgba(224,128,128,.07)}
+.tag.dx{color:var(--xiong-strong);border-color:rgba(255,120,120,.5);background:rgba(255,120,120,.12)}
 
 /* 八宅 */
 .bazhai{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
@@ -90,9 +94,9 @@ tr.now td{color:var(--gold2);font-weight:600}
 .bz .deg{font-size:10px;color:var(--dim2);font-variant-numeric:tabular-nums}
 .bz.j{border-color:rgba(79,179,163,.42);background:rgba(79,179,163,.07)}
 .bz.j .star{color:var(--jade)}
-.bz.x .star{color:#c98080}
+.bz.x .star{color:var(--xiong)}
 .bz.dx{border-color:rgba(255,110,110,.5);background:rgba(255,110,110,.09)}
-.bz.dx .star{color:#ff8a8a}
+.bz.dx .star{color:var(--xiong-strong)}
 @media(max-width:640px){.bazhai{grid-template-columns:1fr 1fr}.pillars{grid-template-columns:1fr 1fr}.card{padding:20px 16px}}
 
 .kv{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px}
@@ -106,7 +110,8 @@ tr.now td{color:var(--gold2);font-weight:600}
 .ge .n{font-size:11px;color:var(--dim2);letter-spacing:.1em}
 .ge .num{font-size:26px;font-weight:700;margin:5px 0}
 .ge .txt{font-size:11px;color:var(--dim);line-height:1.6}
-#result{display:none}
+#result{display:none;scroll-margin-top:16px}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 .footer{text-align:center;color:var(--dim2);font-size:11px;margin-top:34px;letter-spacing:.1em;line-height:2}
@@ -152,7 +157,7 @@ tr.now td{color:var(--gold2);font-weight:600}
     <div class="hint" style="margin-top:14px">填好后点「开始排盘」，页面底部会多出一块合婚分析。</div>
   </div>
 
-  <div id="result"></div>
+  <div id="result" role="region" aria-label="排盘结果" aria-live="polite" aria-busy="false"></div>
 
   <div class="footer">
     本页为传统命理文化推演工具，结果仅供文化参考与自我反思<br>
