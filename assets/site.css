@@ -612,7 +612,9 @@ button {
   color: var(--ink);
   font-family: inherit;
   font-size: 14px;
-  outline: none;
+  /* 不要在这里写 outline: none：它比全局 :focus-visible 优先级更高，
+     会把键盘焦点环整块抹掉（曾导致 13 个控件键盘聚焦时无可见指示）。
+     聚焦指示统一由 :focus-visible 拥有，这里只负责边框与阴影。 */
   transition:
     border-color var(--d-fast),
     box-shadow var(--d-fast);

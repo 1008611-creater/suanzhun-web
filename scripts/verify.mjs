@@ -1,10 +1,12 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { gzipSync } from 'node:zlib';
 import { resolve } from 'node:path';
 import { CSP } from './serve.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const required = [
+  '.nvmrc',
   'index.html',
   'paipan.html',
   '404.html',
@@ -191,6 +193,57 @@ const engineReadsClock = /new Date\(|Date\.now\(/u.test(analysisJs);
 const adviceHasDisclaimer = /不构成择业或投资建议/u.test(appJs) && /不做「正缘」承诺/u.test(appJs);
 
 /**
+ * 焦点可见性：表单控件曾写死 outline: none，优先级高于全局 :focus-visible，
+ * 键盘 Tab 到 13 个输入控件时看不到任何焦点框（WCAG 2.4.7 不达标）。
+ * 这里禁止任何规则再关掉 outline，并要求 :focus-visible 规则存在。
+ */
+/* 先剥掉 CSS 注释，否则「不要写 outline: none」这类说明文字会被当成真实声明误判。 */
+const stripCssComments = (css) => css.replace(/\/\*[\s\S]*?\*\//gu, '');
+const focusRingOwned =
+  /:focus-visible\s*\{/u.test(siteCss) && !/outline\s*:\s*none/iu.test(stripCssComments(siteCss + tokensCss));
+
+/**
+ * 可读名称：表单控件已有专门检查，这里补上链接与按钮——
+ * 只有图标没有文字、又没有 aria-label 的控件，读屏软件只会念出「按钮」。
+ */
+function unnamedControls(html) {
+  const missing = [];
+  for (const m of html.matchAll(/<(a|button)\b([^>]*)>([\s\S]*?)<\/\1>/giu)) {
+    const attrs = m[2];
+    const inner = m[3]
+      .replace(/<[^>]*>/gu, '')
+      .replace(/\s+/gu, ' ')
+      .trim();
+    if (inner || /\baria-label(?:ledby)?\s*=/iu.test(attrs) || /\btitle\s*=/iu.test(attrs)) continue;
+    missing.push(`<${m[1].toLowerCase()}${attrs}>`);
+  }
+  return missing;
+}
+const unnamed = [...unnamedControls(home), ...unnamedControls(paipan), ...unnamedControls(notFound)];
+
+/**
+ * 性能预算：PRD 的「首屏 1 秒内显示主要内容」此前没有任何度量，只能靠人记得去量。
+ * 这里把关键路径与脚本总量都换算成 gzip 字节数并设上限：
+ * 首屏关键资源 = 页面 HTML + 两个外链样式表；脚本总量 = 三个脚本之和。
+ */
+const gzBytes = (file) => gzipSync(readFileSync(resolve(root, file))).length;
+const CRITICAL_BUDGET = 20 * 1024;
+const SCRIPT_BUDGET = 48 * 1024;
+const criticalGz = Math.max(
+  gzBytes('index.html') + gzBytes('assets/tokens.css') + gzBytes('assets/site.css'),
+  gzBytes('paipan.html') + gzBytes('assets/tokens.css') + gzBytes('assets/site.css')
+);
+const scriptGz = gzBytes('app.js') + gzBytes('bazi.js') + gzBytes('analysis.js');
+
+/**
+ * Node 版本此前只写在 package.json 的 engines 里，本地用别的 Node 时表现会不一致。
+ * .nvmrc 给出单一可执行版本，并与 engines 的主版本锁死。
+ */
+const nvmrc = existsSync(resolve(root, '.nvmrc')) ? readFileSync(resolve(root, '.nvmrc'), 'utf8').trim() : '';
+const pkgEngines = (JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8')).engines || {}).node || '';
+const nvmrcMatchesEngines = nvmrc !== '' && nvmrc === (pkgEngines.match(/\d+/u) || [])[0];
+
+/**
  * 文档里写死的「契约数」「上线文件数」会随代码演进而漂移：
  * README 曾写 23 项契约、Runbook 曾写 11 个上线文件，实际早已不是。
  * 光靠人记得改文档不成立，这里把文档声称的数字与代码里的真实数字锁在一起。
@@ -265,6 +318,10 @@ const checks = [
   ['页面声明中文语言', /<html[^>]+lang=["']zh-CN["']/iu.test(home) && /<html[^>]+lang=["']zh-CN["']/iu.test(paipan)],
   ['页面各有一个 h1', (home.match(/<h1\b/giu) || []).length === 1 && (paipan.match(/<h1\b/giu) || []).length === 1],
   ['排盘结果区对读屏可播报', /id=["']result["'][^>]*aria-live=["']polite["']/iu.test(paipan)],
+  [
+    '排盘结果区可接收键盘焦点且渲染后自动聚焦',
+    /id=["']result["'][^>]*tabindex=["']-1["']/iu.test(paipan) && /box\.focus\(\{\s*preventScroll/u.test(appJs),
+  ],
   ['文档索引指向的文件都存在', indexMissing.length === 0],
   ['所有 ADR 都登记进索引', adrUnlisted.length === 0],
   ['CSP 在 Nginx 与本地预览逐字一致', cspAllMatchServe],
@@ -291,6 +348,12 @@ const checks = [
     '表单校验用页面内提示而非 alert',
     !/alert\(/u.test(appJs) && /formAlert/u.test(appJs) && /role=["']alert["']/iu.test(paipan),
   ],
+  ['焦点环不被 outline:none 覆盖', focusRingOwned],
+  ['链接与按钮都有可读名称', unnamed.length === 0],
+  ['404 页也声明中文语言', /<html[^>]+lang=["']zh-CN["']/iu.test(notFound)],
+  ['首屏关键资源 gzip 预算内', criticalGz <= CRITICAL_BUDGET],
+  ['脚本总量 gzip 预算内', scriptGz <= SCRIPT_BUDGET],
+  ['.nvmrc 与 package.json engines 主版本一致', nvmrcMatchesEngines],
 ];
 /* 这三项依赖最终总数，先算好总数再追加，避免在数组字面量里引用自身。 */
 const totalChecks = checks.length + 3;

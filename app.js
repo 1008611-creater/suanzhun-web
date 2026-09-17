@@ -915,6 +915,9 @@
 
     box.scrollIntoView({ behavior: 'smooth', block: 'start' });
     box.setAttribute('aria-busy', 'false');
+    /* 键盘用户点完「开始排盘」后，焦点原本还留在按钮上，得手动往下翻才能到报告。
+       把焦点移到结果区，读屏会从报告开头播报，Tab 也会继续在报告内走。 */
+    box.focus({ preventScroll: true });
   }
 
   /* ---------- 事件 ---------- */
