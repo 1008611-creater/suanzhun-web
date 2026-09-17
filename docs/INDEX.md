@@ -38,6 +38,7 @@ README.md
 | `adr/0005-liunian-window-and-result-next-step.md` | 流年窗口跟随当前年份与结果页转化收尾                 |
 | `adr/0006-action-advice-engine.md`                | 行动建议引擎：事业、婚姻、八宅落地与姓名优选         |
 | `adr/0007-design-tokens-and-inline-style-ban.md`  | 设计令牌单归属、外链样式与内联样式禁令               |
+| `adr/0008-doc-numbers-locked-to-code.md`          | 文档里的契约数与上线文件数与代码锁死                 |
 | `adr/README.md`                                   | ADR 编号与只增不改约定                               |
 
 ## 权威来源（不要重复维护）

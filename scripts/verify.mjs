@@ -30,6 +30,8 @@ const required = [
   'docs/adr/0004-csp-single-owner-and-input-escaping.md',
   'docs/adr/0005-liunian-window-and-result-next-step.md',
   'docs/adr/0006-action-advice-engine.md',
+  'docs/adr/0007-design-tokens-and-inline-style-ban.md',
+  'docs/adr/0008-doc-numbers-locked-to-code.md',
   'scripts/secret-scan.mjs',
   'scripts/check-contrast.mjs',
   'tests/preview.test.mjs',
@@ -171,6 +173,19 @@ const adviceTakesNowYear = /A\.career\(p,\s*nowYear\)/u.test(appJs) && /A\.marri
 const engineReadsClock = /new Date\(|Date\.now\(/u.test(analysisJs);
 const adviceHasDisclaimer = /不构成择业或投资建议/u.test(appJs) && /不做「正缘」承诺/u.test(appJs);
 
+/**
+ * 文档里写死的「契约数」「上线文件数」会随代码演进而漂移：
+ * README 曾写 23 项契约、Runbook 曾写 11 个上线文件，实际早已不是。
+ * 光靠人记得改文档不成立，这里把文档声称的数字与代码里的真实数字锁在一起。
+ */
+const readme = readFileSync(resolve(root, 'README.md'), 'utf8');
+const runbook = readFileSync(resolve(root, 'docs/RELEASE-RUNBOOK.md'), 'utf8');
+const deployJs = readFileSync(resolve(root, 'scripts/deploy.mjs'), 'utf8');
+const deployFilesBlock = deployJs.match(/const FILES = \[([\s\S]*?)\];/u);
+const deployFiles = deployFilesBlock ? [...deployFilesBlock[1].matchAll(/'([^']+)'/gu)].map((m) => m[1]) : [];
+const readmeClaimsChecks = Number((readme.match(/包含\s*(\d+)\s*项契约/u) || [])[1]);
+const runbookClaimsFiles = Number((runbook.match(/计算\s*(\d+)\s*个上线文件/u) || [])[1]);
+
 const checks = [
   ['home links to paipan', /href=["']paipan\.html/iu.test(home)],
   ['paipan loads bazi', /<script[^>]+src=["']bazi\.js/iu.test(paipan)],
@@ -217,6 +232,14 @@ const checks = [
   ['行动建议带免责说明', adviceHasDisclaimer],
   ['页面声明 CSP 兼容结构（无内联脚本）', !/<script(?![^>]*\bsrc=)[^>]*>/iu.test(home + paipan)],
 ];
+/* 这三项依赖最终总数，先算好总数再追加，避免在数组字面量里引用自身。 */
+const totalChecks = checks.length + 3;
+checks.push(['README 声称的契约数与实际一致', readmeClaimsChecks === totalChecks]);
+checks.push(['发布文档声称的上线文件数与 deploy.mjs 一致', runbookClaimsFiles === deployFiles.length]);
+checks.push([
+  '发布文档的上线文件清单覆盖 deploy.mjs 的每个文件',
+  deployFiles.every((f) => runbook.includes('`' + f + '`')),
+]);
 const failures = checks.filter(([, ok]) => !ok).map(([name]) => name);
 if (failures.length) {
   process.stderr.write(`[verify] 契约检查未通过（${failures.length} 项）：\n`);
