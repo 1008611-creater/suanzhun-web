@@ -15,7 +15,7 @@ npm run deploy                # 正式发布
 脚本按顺序做五件事：
 
 1. 跑 `npm run release:check`（lint + 结构契约 + 回归测试），不通过就中止。
-2. 计算 7 个上线文件的本地 sha256，并读取线上同名文件的 sha256。
+2. 计算 11 个上线文件的本地 sha256，并读取线上同名文件的 sha256。
 3. 只对哈希不同的文件执行上传；线上缺失的文件也计入差异。
 4. 上传前在远端创建 `/srv/suanzhun/backups/<时间戳>` 全量备份。
 5. 上传后重新比对哈希，并逐个请求线上地址确认返回 200。
@@ -176,3 +176,19 @@ cp -a /srv/suanzhun/backups/<时间戳>/. /srv/suanzhun/public/
 | 发布前   | `npm run release:check` 通过：lint + 格式 + 密钥扫描 + 26 项契约 + 对比度契约 + 27 项测试                   |
 | 发布后   | 三页 × 1280/375 实测 `overflow=0 contrastFails=0 consoleErrors=0`；渐变大字逐像素采样最差 5.60:1            |
 | 复核     | 11 个文件哈希复核一致，10 个地址全部 200；八宅/五行/大运标签清晰可读                                        |
+
+### 2026-09-18 0.7.0 CSP 与输入转义
+
+线上响应头一直缺 `Content-Security-Policy`。排查时发现更严重的问题：姓名会直接拼进
+`innerHTML`，真实浏览器里填 `<img src=x onerror="window.__xss=1">` 会真的执行。本轮
+修复该 DOM-XSS、补上 CSP，并把排盘页输入控件升到 44px 触控目标。
+
+| 项目     | 值                                                                                                              |
+| -------- | --------------------------------------------------------------------------------------------------------------- |
+| 备份     | `/srv/suanzhun/backups/20260918-032755`                                                                         |
+| 变更文件 | `paipan.html` `app.js`（其余 9 个文件哈希一致，未上传）                                                         |
+| 基础设施 | `nginx.conf` 用 `set $csp` + 每个缓存 location 各写一份 `add_header`（`add_header` 不继承）                     |
+| 改动     | 新增 `esc()` 转义用户输入；Nginx 与本地预览同源 CSP；输入控件 `min-height:44px`；新增 ADR 0004                  |
+| 发布前   | `npm run release:check` 通过：lint + 格式 + 密钥扫描 + 27 项契约 + 对比度契约 + 29 项测试                       |
+| 发布后   | 线上 10 个地址（含 404）CSP 逐字匹配配置；浏览器实测 XSS 已阻断、0 CSP 违规、0 报错；375px 下 `under44=0`       |
+| 复核     | 5 种 XSS payload × 主盘/合婚盘全部 safe；4 项闸门反向验证全部 CAUGHT（删 CSP/制造漂移/删 esc 用法/删 esc 函数） |
