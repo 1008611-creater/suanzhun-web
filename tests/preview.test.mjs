@@ -26,6 +26,10 @@ const CASES = [
   ['/bazi.js', 200, 'no-cache', 'text/javascript'],
   ['/og-image.png', 200, 'public, max-age=604800', 'image/png'],
   ['/favicon.svg', 200, 'public, max-age=604800', 'image/svg\\+xml'],
+  ['/favicon.ico', 200, 'public, max-age=604800', 'image/x-icon'],
+  ['/assets/icon-192.png', 200, 'public, max-age=604800', 'image/png'],
+  ['/assets/icon-maskable-512.png', 200, 'public, max-age=604800', 'image/png'],
+  ['/site.webmanifest', 200, 'public, max-age=3600', 'application/manifest\\+json'],
   ['/robots.txt', 200, 'public, max-age=3600', 'text/plain'],
   ['/sitemap.xml', 200, 'public, max-age=3600', 'application/xml'],
 ];
@@ -68,7 +72,16 @@ test('preview 拒绝越出站点目录的路径', async () => {
  */
 test('preview 所有响应都带 CSP，且与配置一致', async () => {
   await withServer(async (base) => {
-    for (const path of ['/', '/paipan.html', '/app.js', '/og-image.png', '/robots.txt', '/does-not-exist']) {
+    for (const path of [
+      '/',
+      '/paipan.html',
+      '/app.js',
+      '/og-image.png',
+      '/favicon.ico',
+      '/site.webmanifest',
+      '/robots.txt',
+      '/does-not-exist',
+    ]) {
       const res = await fetch(base + path);
       assert.equal(res.headers.get('content-security-policy'), CSP, `${path} CSP`);
     }

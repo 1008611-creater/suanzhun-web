@@ -37,6 +37,47 @@ const favicon = [
   '',
 ].join('\n');
 
+/* maskable 图标：主体收进中心安全区、背景铺满画布。
+   系统把它裁成圆形或水滴形时不会切掉四柱标记。 */
+const maskableSvg = [
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="算的准">',
+  '  <defs><linearGradient id="tile" x1="0" y1="0" x2="0.7" y2="1">',
+  '    <stop offset="0" stop-color="' + BERRY + '"/><stop offset="1" stop-color="' + BERRY_DEEP + '"/>',
+  '  </linearGradient></defs>',
+  '  <rect width="64" height="64" fill="url(#tile)"/>',
+  '  <g transform="translate(32 32) scale(0.68) translate(-32 -32)">' + barSvg + '</g>',
+  '</svg>',
+  '',
+].join('\n');
+
+/* 浏览器和爬虫在没有 <link rel="icon"> 命中时，仍会默认请求 /favicon.ico。
+   缺了它线上会稳定多出一条 404，看着就像站点没做完。
+   这里把渲染出的 PNG 按 ICO 容器打包成多尺寸图标。 */
+function icoFromPngs(entries) {
+  const header = Buffer.alloc(6);
+  header.writeUInt16LE(0, 0);
+  header.writeUInt16LE(1, 2);
+  header.writeUInt16LE(entries.length, 4);
+  const dir = Buffer.alloc(16 * entries.length);
+  let offset = 6 + 16 * entries.length;
+  const blobs = [];
+  entries.forEach((entry, i) => {
+    const at = i * 16;
+    const dim = entry.size >= 256 ? 0 : entry.size;
+    dir.writeUInt8(dim, at);
+    dir.writeUInt8(dim, at + 1);
+    dir.writeUInt8(0, at + 2);
+    dir.writeUInt8(0, at + 3);
+    dir.writeUInt16LE(1, at + 4);
+    dir.writeUInt16LE(32, at + 6);
+    dir.writeUInt32LE(entry.png.length, at + 8);
+    dir.writeUInt32LE(offset, at + 12);
+    offset += entry.png.length;
+    blobs.push(entry.png);
+  });
+  return Buffer.concat([header, dir, ...blobs]);
+}
+
 const markSvg =
   '<svg width="52" height="52" viewBox="0 0 64 64" aria-hidden="true">' +
   '<defs><linearGradient id="tile" x1="0" y1="0" x2="0.7" y2="1">' +
@@ -102,17 +143,76 @@ const browser = await chromium.launch();
 
 writeFileSync(resolve(root, 'favicon.svg'), favicon);
 
-const iconPage = await browser.newPage({ viewport: { width: 180, height: 180 } });
-await iconPage.setContent(
-  '<style>html,body{margin:0;width:180px;height:180px}svg{display:block;width:180px;height:180px}</style>' +
-    favicon.replace('<svg ', '<svg width="180" height="180" '),
-  { waitUntil: 'load' }
-);
-await iconPage.screenshot({ path: resolve(root, 'apple-touch-icon.png'), omitBackground: true });
+/* 同一份矢量在不同画布尺寸下渲染成 PNG。图标族要覆盖：
+   苹果主屏图标 180、PWA 图标 192/512、maskable 192/512、favicon.ico 16/32/48。 */
+async function renderIcon(svg, size, { opaque = false, inner = null } = {}) {
+  const page = await browser.newPage({ viewport: { width: size, height: size } });
+  const body = inner === null ? svg.replace('<svg ', '<svg width="' + size + '" height="' + size + '" ') : inner;
+  await page.setContent(
+    '<style>html,body{margin:0;width:' +
+      size +
+      'px;height:' +
+      size +
+      'px;background:transparent}svg{display:block;width:' +
+      size +
+      'px;height:' +
+      size +
+      'px}</style>' +
+      body,
+    { waitUntil: 'load' }
+  );
+  const shot = await page.screenshot({ omitBackground: !opaque });
+  await page.close();
+  return shot;
+}
+
+const appleIcon = await renderIcon(favicon, 180);
+writeFileSync(resolve(root, 'apple-touch-icon.png'), appleIcon);
+
+const icon192 = await renderIcon(favicon, 192);
+const icon512 = await renderIcon(favicon, 512);
+writeFileSync(resolve(root, 'assets/icon-192.png'), icon192);
+writeFileSync(resolve(root, 'assets/icon-512.png'), icon512);
+
+const maskable192 = await renderIcon(maskableSvg, 192, { opaque: true });
+const maskable512 = await renderIcon(maskableSvg, 512, { opaque: true });
+writeFileSync(resolve(root, 'assets/icon-maskable-192.png'), maskable192);
+writeFileSync(resolve(root, 'assets/icon-maskable-512.png'), maskable512);
+
+/* 浏览器请求 /favicon.ico 时不带 <link> 信息，需要真实文件兜底。 */
+const ico = icoFromPngs([
+  { size: 16, png: await renderIcon(favicon, 16) },
+  { size: 32, png: await renderIcon(favicon, 32) },
+  { size: 48, png: await renderIcon(favicon, 48) },
+]);
+writeFileSync(resolve(root, 'favicon.ico'), ico);
+
+/* PWA 清单：让手机能「添加到主屏幕」，并固定主题色与显示模式。 */
+const manifest = {
+  name: '算的准 · 传统命理文化参考工具',
+  short_name: '算的准',
+  description: '真太阳时、四柱八字、五行旺衰、大运流年、八宅命卦、姓名五格与合婚参考，全部在浏览器本地计算。',
+  lang: 'zh-CN',
+  dir: 'ltr',
+  start_url: '/paipan.html',
+  scope: '/',
+  display: 'standalone',
+  background_color: '#fff4f9',
+  theme_color: '#9e366f',
+  icons: [
+    { src: '/assets/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+    { src: '/assets/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+    { src: '/assets/icon-maskable-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+    { src: '/assets/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+  ],
+};
+writeFileSync(resolve(root, 'site.webmanifest'), JSON.stringify(manifest, null, 2) + '\n');
 
 const ogPage = await browser.newPage({ viewport: { width: 1200, height: 630 } });
 await ogPage.setContent(ogHtml, { waitUntil: 'load' });
 await ogPage.screenshot({ path: resolve(root, 'og-image.png') });
 
 await browser.close();
-console.log('已生成 favicon.svg / apple-touch-icon.png / og-image.png');
+console.log(
+  '已生成 favicon.svg / favicon.ico / apple-touch-icon.png / icon-192 / icon-512 / maskable / site.webmanifest / og-image.png'
+);

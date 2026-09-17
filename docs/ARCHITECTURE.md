@@ -7,7 +7,8 @@
 交互层       app.js
 领域计算层   bazi.js / analysis.js
 质量层       scripts/verify.mjs / tests/
-资源层       favicon.svg / apple-touch-icon.png / og-image.png（由 scripts/build-assets.mjs 生成）
+资源层       图标族（favicon.svg / favicon.ico / apple-touch-icon.png / assets/icon-*.png）
+             / site.webmanifest / og-image.png（由 scripts/build-assets.mjs 生成）
 部署层       Nginx 静态目录 /srv/suanzhun/public
 运行时层     deploy/nginx.conf + deploy/docker-compose.yml -> /srv/suanzhun/
 ```

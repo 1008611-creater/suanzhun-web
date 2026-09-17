@@ -1,6 +1,6 @@
 {
   "name": "suanzhun-web",
-  "version": "0.10.2",
+  "version": "0.11.0",
   "private": true,
   "description": "算的准：传统命理文化参考工具",
   "type": "module",

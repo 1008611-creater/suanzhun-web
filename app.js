@@ -918,12 +918,27 @@
   }
 
   /* ---------- 事件 ---------- */
+  // 表单校验走页面内提示，不用 alert：alert 会打断读屏、无法样式化，
+  // 也与「产品级」体验不符。提示节点在 paipan.html 里，带 role="alert"。
+  function showFormAlert(msg) {
+    var a = $('formAlert');
+    if (!a) return;
+    a.textContent = msg;
+    a.hidden = false;
+  }
+  function clearFormAlert() {
+    var a = $('formAlert');
+    if (a) a.hidden = true;
+  }
   function run() {
     var opt = readForm('', 120);
     if (!opt) {
-      alert('请填写完整的出生日期与时间');
+      showFormAlert('请先填写完整的出生日期与出生时间，再点「开始排盘」。');
+      var dEl = $('date');
+      if (dEl) dEl.focus();
       return;
     }
+    clearFormAlert();
     var p = calc(opt);
     var po = readForm('p_', opt.lng);
     if (po && po.year && !document.getElementById('partnerBox').hidden) {
@@ -935,6 +950,7 @@
   }
   $('go').addEventListener('click', run);
   $('reset').addEventListener('click', function () {
+    clearFormAlert();
     $('name').value = '';
     $('date').value = '';
     $('time').value = '';

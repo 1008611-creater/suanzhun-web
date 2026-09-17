@@ -1,0 +1,38 @@
+{
+  "name": "算的准 · 传统命理文化参考工具",
+  "short_name": "算的准",
+  "description": "真太阳时、四柱八字、五行旺衰、大运流年、八宅命卦、姓名五格与合婚参考，全部在浏览器本地计算。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "/paipan.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fff4f9",
+  "theme_color": "#9e366f",
+  "icons": [
+    {
+      "src": "/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

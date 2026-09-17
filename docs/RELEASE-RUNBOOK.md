@@ -15,7 +15,7 @@ npm run deploy                # 正式发布
 脚本按顺序做五件事：
 
 1. 跑 `npm run release:check`（lint + 结构契约 + 回归测试），不通过就中止。
-2. 计算 13 个上线文件的本地 sha256，并读取线上同名文件的 sha256。
+2. 计算 19 个上线文件的本地 sha256，并读取线上同名文件的 sha256。
 3. 只对哈希不同的文件执行上传；线上缺失的文件也计入差异。
 4. 上传前在远端创建 `/srv/suanzhun/backups/<时间戳>` 全量备份。
 5. 上传后重新比对哈希，并逐个请求线上地址确认返回 200。
@@ -40,7 +40,7 @@ npm run deploy                # 正式发布
 
 ## 上线文件清单
 
-`index.html`、`paipan.html`、`404.html`、`assets/tokens.css`、`assets/site.css`、`app.js`、`analysis.js`、`bazi.js`、`favicon.svg`、`apple-touch-icon.png`、`og-image.png`、`robots.txt`、`sitemap.xml`。
+`index.html`、`paipan.html`、`404.html`、`assets/tokens.css`、`assets/site.css`、`app.js`、`analysis.js`、`bazi.js`、`favicon.svg`、`favicon.ico`、`apple-touch-icon.png`、`assets/icon-192.png`、`assets/icon-512.png`、`assets/icon-maskable-192.png`、`assets/icon-maskable-512.png`、`site.webmanifest`、`og-image.png`、`robots.txt`、`sitemap.xml`。
 
 这些文件与 `scripts/deploy.mjs` 中的 `FILES` 常量一一对应；新增上线文件必须同时改这里和脚本，否则不会被发布。
 

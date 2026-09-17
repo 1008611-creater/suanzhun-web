@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.11.0 - 2026-09-18
+
+### 图标族、可安装清单与表单提示
+
+浏览器与爬虫默认请求的 `/favicon.ico` 一直返回 404，手机端也无法「添加到主屏幕」。
+本轮补齐完整图标族与 Web App Manifest，并把表单校验从 `alert` 换成页面内提示。
+
+- **图标族单归属。** `scripts/build-assets.mjs` 一处产出 `favicon.ico`（16/32/48 三尺寸）、
+  `apple-touch-icon.png`、`assets/icon-192.png`、`assets/icon-512.png` 及 maskable 两个尺寸。
+  ICO 容器由脚本手写，不引入新的构建依赖。
+- **可安装清单。** 新增 `site.webmanifest`，三个页面统一外链；CSP 里预留的
+  `manifest-src 'self'` 至此真正生效，手机可添加到主屏幕并直达排盘页。
+- **缓存与类型对齐。** Nginx 与本地预览为 `.ico` 加 7 天缓存、为 `/site.webmanifest`
+  加一小时缓存与 `application/manifest+json` 类型，两处逐字一致。
+- **表单提示替代 alert。** 排盘页新增 `role="alert"` 的行内提示节点，
+  `app.js` 不再用 `alert()`，校验失败时聚焦日期字段，读屏可播报。
+- **新增闸门。** `scripts/verify.mjs` 新增 5 项契约（清单可解析、ICO 头合法、
+  三页外链清单、发布脚本覆盖新资源、无 `alert`）；README 契约数同步为 47，Runbook 上线文件数同步为 19。
+- **新增 ADR 0009。** 记录图标族与 PWA 清单的单归属决策，并登记进 `docs/INDEX.md`。
+
 ## 0.10.2 - 2026-09-18
 
 ### 品牌一致性收尾

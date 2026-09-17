@@ -18,6 +18,7 @@ const TYPES = {
   '.woff2': 'font/woff2',
   '.txt': 'text/plain; charset=utf-8',
   '.xml': 'application/xml; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
 };
 
 /**
@@ -26,8 +27,9 @@ const TYPES = {
  */
 function cacheControl(pathname) {
   if (/\.(?:html|js|css)$/i.test(pathname)) return 'no-cache';
-  if (/\.(?:svg|png|jpg|jpeg|webp|woff2)$/i.test(pathname)) return 'public, max-age=604800';
-  if (pathname === '/robots.txt' || pathname === '/sitemap.xml') return 'public, max-age=3600';
+  if (/\.(?:svg|png|jpg|jpeg|webp|woff2|ico)$/i.test(pathname)) return 'public, max-age=604800';
+  if (pathname === '/robots.txt' || pathname === '/sitemap.xml' || pathname === '/site.webmanifest')
+    return 'public, max-age=3600';
   return null;
 }
 

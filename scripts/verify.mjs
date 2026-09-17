@@ -14,7 +14,13 @@ const required = [
   'analysis.js',
   'bazi.js',
   'favicon.svg',
+  'favicon.ico',
   'apple-touch-icon.png',
+  'assets/icon-192.png',
+  'assets/icon-512.png',
+  'assets/icon-maskable-192.png',
+  'assets/icon-maskable-512.png',
+  'site.webmanifest',
   'og-image.png',
   'robots.txt',
   'sitemap.xml',
@@ -32,6 +38,7 @@ const required = [
   'docs/adr/0006-action-advice-engine.md',
   'docs/adr/0007-design-tokens-and-inline-style-ban.md',
   'docs/adr/0008-doc-numbers-locked-to-code.md',
+  'docs/adr/0009-icon-family-and-pwa-manifest.md',
   'scripts/secret-scan.mjs',
   'scripts/check-contrast.mjs',
   'tests/preview.test.mjs',
@@ -193,8 +200,42 @@ const runbook = readFileSync(resolve(root, 'docs/RELEASE-RUNBOOK.md'), 'utf8');
 const deployJs = readFileSync(resolve(root, 'scripts/deploy.mjs'), 'utf8');
 const deployFilesBlock = deployJs.match(/const FILES = \[([\s\S]*?)\];/u);
 const deployFiles = deployFilesBlock ? [...deployFilesBlock[1].matchAll(/'([^']+)'/gu)].map((m) => m[1]) : [];
+const deployUrlsBlock = deployJs.match(/const URLS = \[([\s\S]*?)\];/u);
+const deployUrls = deployUrlsBlock ? [...deployUrlsBlock[1].matchAll(/'([^']+)'/gu)].map((m) => m[1]) : [];
 const readmeClaimsChecks = Number((readme.match(/包含\s*(\d+)\s*项契约/u) || [])[1]);
 const runbookClaimsFiles = Number((runbook.match(/计算\s*(\d+)\s*个上线文件/u) || [])[1]);
+
+/**
+ * 图标族与 PWA 清单：favicon.ico 是浏览器与爬虫的默认请求地址，
+ * 缺失会在每个页面的网络面板里留下 404；site.webmanifest 让手机能「添加到主屏幕」。
+ * 这两类文件由 scripts/build-assets.mjs 生成，容易生成后忘记接线，这里锁死端到端链路。
+ */
+const manifestText = readFileSync(resolve(root, 'site.webmanifest'), 'utf8');
+let manifest;
+try {
+  manifest = JSON.parse(manifestText);
+} catch {
+  manifest = null;
+}
+const manifestValid =
+  !!manifest && typeof manifest.start_url === 'string' && Array.isArray(manifest.icons) && manifest.icons.length > 0;
+const pagesLinkManifest =
+  /rel=["']manifest["'][^>]+site\.webmanifest/iu.test(home) &&
+  /rel=["']manifest["'][^>]+site\.webmanifest/iu.test(paipan) &&
+  /rel=["']manifest["'][^>]+site\.webmanifest/iu.test(notFound);
+const icoBytes = readFileSync(resolve(root, 'favicon.ico'));
+const icoValid = icoBytes.length > 22 && icoBytes.readUInt16LE(0) === 0 && icoBytes.readUInt16LE(2) === 1;
+const icoIconCount = icoValid ? icoBytes.readUInt16LE(4) : 0;
+const newAssets = [
+  'favicon.ico',
+  'assets/icon-192.png',
+  'assets/icon-512.png',
+  'assets/icon-maskable-192.png',
+  'assets/icon-maskable-512.png',
+  'site.webmanifest',
+];
+const deployCoversNewAssets =
+  newAssets.every((f) => deployFiles.includes(f)) && newAssets.every((f) => deployUrls.includes('/' + f));
 
 const checks = [
   ['home links to paipan', /href=["']paipan\.html/iu.test(home)],
@@ -242,6 +283,14 @@ const checks = [
   ['行动建议带免责说明', adviceHasDisclaimer],
   ['页面声明 CSP 兼容结构（无内联脚本）', !/<script(?![^>]*\bsrc=)[^>]*>/iu.test(home + paipan)],
   ['三页 theme-color 一致', themeColorConsistent],
+  ['三页都外链 site.webmanifest', pagesLinkManifest],
+  ['site.webmanifest 可解析且含 start_url 与 icons', manifestValid],
+  ['favicon.ico 存在且 ICO 头合法', icoValid && icoIconCount >= 1],
+  ['deploy.mjs 的 FILES 与 URLS 覆盖图标族与清单', deployCoversNewAssets],
+  [
+    '表单校验用页面内提示而非 alert',
+    !/alert\(/u.test(appJs) && /formAlert/u.test(appJs) && /role=["']alert["']/iu.test(paipan),
+  ],
 ];
 /* 这三项依赖最终总数，先算好总数再追加，避免在数组字面量里引用自身。 */
 const totalChecks = checks.length + 3;
