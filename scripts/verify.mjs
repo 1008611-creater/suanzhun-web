@@ -8,6 +8,8 @@ const required = [
   'index.html',
   'paipan.html',
   '404.html',
+  'assets/tokens.css',
+  'assets/site.css',
   'app.js',
   'analysis.js',
   'bazi.js',
@@ -47,6 +49,8 @@ const home = readFileSync(resolve(root, 'index.html'), 'utf8');
 const paipan = readFileSync(resolve(root, 'paipan.html'), 'utf8');
 const nginx = readFileSync(resolve(root, 'deploy/nginx.conf'), 'utf8');
 const serve = readFileSync(resolve(root, 'scripts/serve.mjs'), 'utf8');
+const siteCss = readFileSync(resolve(root, 'assets/site.css'), 'utf8');
+const tokensCss = readFileSync(resolve(root, 'assets/tokens.css'), 'utf8');
 
 /**
  * 无障碍契约：读屏软件依赖 label 与控件的显式关联。
@@ -135,7 +139,14 @@ const engineHasLnYears = /function\s+lnYears\s*\(/u.test(readFileSync(resolve(ro
  * 这里锁死收尾卡片与联系方式，防止转化入口被删掉。
  */
 const hasNextStepCard = /'wx-id',\s*'ANS_0912'/u.test(appJs) && /复制微信号/u.test(appJs) && /card next/u.test(appJs);
-const hasPrintStyles = /@media print/u.test(paipan);
+/* 打印样式与减动效样式现在都由 assets/site.css 单点拥有，页面里不再各自复制。 */
+const hasPrintStyles = /@media print/u.test(siteCss);
+const hasReducedMotion = /prefers-reduced-motion/u.test(siteCss);
+/* 样式与脚本都不能内联：CSP 的 style-src/script-src 都是 'self'。 */
+const hasNoInlineStyle = !/<style\b/iu.test(home + paipan) && !/\sstyle\s*=/iu.test(home + paipan);
+const pagesLinkTokens = /assets\/tokens\.css/u.test(home) && /assets\/tokens\.css/u.test(paipan);
+const pagesLinkSite = /assets\/site\.css/u.test(home) && /assets\/site\.css/u.test(paipan);
+const tokensHaveRoot = /:root\s*\{/u.test(tokensCss);
 
 /**
  * 行动建议引擎：事业、婚姻、八宅落地、姓名优选四块都要真的接进结果页。
@@ -164,7 +175,7 @@ const checks = [
   ['home links to paipan', /href=["']paipan\.html/iu.test(home)],
   ['paipan loads bazi', /<script[^>]+src=["']bazi\.js/iu.test(paipan)],
   ['paipan loads app', /<script[^>]+src=["']app\.js/iu.test(paipan)],
-  ['reduced motion exists', /prefers-reduced-motion/iu.test(home) && /prefers-reduced-motion/iu.test(paipan)],
+  ['reduced motion exists', hasReducedMotion],
   ['primary form action exists', /id=["']go["']/iu.test(paipan)],
   ['home declares canonical', /rel=["']canonical["'][^>]+https:\/\/suanzhun\.cauai\.fun\//iu.test(home)],
   [
@@ -197,6 +208,9 @@ const checks = [
   ['流年年数由调用方传入且引擎有下限', liuNianYearsPassed && engineHasLnYears],
   ['结果页有下一步转化卡片', hasNextStepCard],
   ['结果页有打印样式', hasPrintStyles],
+  ['页面无内联样式（CSP style-src self）', hasNoInlineStyle],
+  ['页面外链 tokens.css 与 site.css', pagesLinkTokens && pagesLinkSite],
+  ['tokens.css 定义 :root 令牌块', tokensHaveRoot],
   ['行动建议四块都接进结果页且引擎有导出', adviceWired],
   ['结果页包含事业/婚姻/八宅落地/姓名优选标题', adviceRendered],
   ['事业与婚姻接收 nowYear 而非读系统时间', adviceTakesNowYear && !engineReadsClock],

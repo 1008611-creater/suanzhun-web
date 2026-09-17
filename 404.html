@@ -6,41 +6,17 @@
 <title>页面不存在 · 算的准</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<style>
-:root{
-  --bg:oklch(98% .018 355); --card:oklch(100% .005 350 / .84); --line:oklch(86% .055 350);
-  --gold:oklch(68% .12 20); --gold2:oklch(50% .15 350); --txt:oklch(28% .035 345);
-  --dim:oklch(48% .045 345); --dim2:oklch(51% .035 345);
-}
-*{box-sizing:border-box}
-html{overflow-x:clip}
-body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;
-  background:radial-gradient(900px 480px at 12% -12%,oklch(92% .06 350 / .75) 0%,transparent 68%),
-  radial-gradient(700px 420px at 100% 8%,oklch(95% .05 45 / .55) 0%,transparent 70%),var(--bg);
-  color:var(--txt);font:15px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
-.box{max-width:460px;width:100%;text-align:center;background:var(--card);border:1px solid var(--line);
-  border-radius:16px;padding:38px 26px 34px;box-shadow:0 12px 34px oklch(50% .05 350 / .08);backdrop-filter:blur(8px)}
-.code{font-size:13px;letter-spacing:.34em;color:var(--dim2)}
-h1{margin:14px 0 10px;font-size:26px;letter-spacing:.16em;color:var(--gold2);font-weight:600}
-p{margin:0;color:var(--dim);font-size:14px}
-.rule{width:64px;height:2px;margin:22px auto;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-.btn{display:block;max-width:280px;margin:0 auto;padding:14px 0;text-align:center;background:var(--gold2);
-  color:oklch(99% .01 355);border-radius:999px;font-size:16px;font-weight:700;letter-spacing:.16em;
-  text-decoration:none;box-shadow:0 10px 26px oklch(50% .15 350 / .18);transition:transform .22s,box-shadow .22s}
-.btn:hover{transform:translateY(-2px)}
-.btn:focus-visible{outline:3px solid oklch(55% .16 350);outline-offset:3px}
-.note{margin-top:16px;font-size:12.5px;color:var(--dim2)}
-@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
-</style>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
-  <div class="box">
+  <div class="nf">
     <div class="code">404</div>
     <h1>这个页面不存在</h1>
     <p>链接可能已经失效，或者地址输错了一个字。</p>
-    <div class="rule"></div>
+    <div class="rule" aria-hidden="true"></div>
     <a class="btn" href="/">回到首页</a>
-    <div class="note">想直接排盘，可以在首页点「免费在线排盘」。</div>
+    <p class="note">想直接排盘，可以在首页点「免费在线排盘」。</p>
   </div>
 </body>
 </html>

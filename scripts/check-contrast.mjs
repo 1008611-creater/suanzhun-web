@@ -59,16 +59,18 @@ function composite(fg, bg) {
   return { rgb: fg.rgb.map((c, i) => c * fg.a + bg.rgb[i] * (1 - fg.a)), a: 1 };
 }
 
-/* ---------- 读取三页 :root 令牌 ---------- */
+/* ---------- 读取令牌 ---------- */
+/* 令牌的唯一归属是 assets/tokens.css。以前三页各自复制一份 :root，改一处漏两处，
+   对比度就会「本地通过、线上失效」。现在只认这一个文件。 */
 function readTokens(file) {
-  const html = readFileSync(resolve(root, file), 'utf8');
-  const block = html.match(/:root\s*\{([\s\S]*?)\}/);
+  const css = readFileSync(resolve(root, file), 'utf8');
+  const block = css.match(/:root\s*\{([\s\S]*?)\}/);
   if (!block) throw new Error(`${file} 缺少 :root 令牌块`);
   const tokens = {};
   for (const m of block[1].matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) tokens[m[1]] = m[2].trim();
   return tokens;
 }
-const pages = { index: readTokens('index.html'), paipan: readTokens('paipan.html'), notFound: readTokens('404.html') };
+const tokens = readTokens('assets/tokens.css');
 
 /* ---------- 最坏底色（与真实渲染一致） ---------- */
 // 浅底：正文卡片由 --card 叠在 --bg 上；用最亮的 --card 与最暗的 --card2 各验一次。
@@ -100,15 +102,15 @@ for (const [name, bg] of [
   ['次级卡片', LIGHT_CARD2],
 ]) {
   for (const token of ['--ink', '--txt', '--dim', '--dim2', '--gold-ink', '--gold2']) {
-    const value = pages.paipan[token] || pages.index[token];
+    const value = tokens[token];
     if (value) requireContrast(`${name}上的 ${token}`, token, value, bg, 4.5);
   }
   for (const token of ['--jade-ink', '--xiong-ink', '--xiong-strong-ink']) {
-    const value = pages.paipan[token];
+    const value = tokens[token];
     if (value) requireContrast(`${name}上的 ${token}`, token, value, bg, 4.5);
   }
   for (const token of ['--wx-mu-ink', '--wx-huo-ink', '--wx-tu-ink', '--wx-jin-ink', '--wx-shui-ink']) {
-    requireContrast(`${name}上的 ${token}`, token, pages.paipan[token], bg, 4.5);
+    requireContrast(`${name}上的 ${token}`, token, tokens[token], bg, 4.5);
   }
 }
 
@@ -125,7 +127,7 @@ for (const [name, bg] of [
     '--xiong-strong-on-dark',
     '--gold-on-dark',
   ]) {
-    requireContrast(`${name}上的 ${token}`, token, pages.paipan[token], bg, 4.5);
+    requireContrast(`${name}上的 ${token}`, token, tokens[token], bg, 4.5);
   }
 }
 
@@ -133,22 +135,23 @@ for (const [name, bg] of [
 requireContrast('四柱渐变端点', 'oklch(66% .14 350)', 'oklch(66% .14 350)', DARK_CHIP, 3);
 
 /* 按钮：白字压在主色上 */
-const BTN_BG = parseColor(pages.paipan['--gold2']);
+const BTN_BG = parseColor(tokens['--gold2']);
 requireContrast('主按钮白字', '--gold2', 'oklch(99% .01 355)', BTN_BG, 4.5);
 
 /* ---------- 使用面契约：不允许再拿浅底原色当文字色 ---------- */
-const paipanHtml = readFileSync(resolve(root, 'paipan.html'), 'utf8');
+/* 样式规则已集中到 assets/site.css，浅底文字色禁令改在这里检查。 */
+const siteCss = readFileSync(resolve(root, 'assets/site.css'), 'utf8');
 const appJs = readFileSync(resolve(root, 'app.js'), 'utf8');
 const forbiddenTextColors = ['--jade', '--xiong', '--xiong-strong', '--gold'];
 for (const token of forbiddenTextColors) {
   // 只允许出现在深色芯片作用域内（.bz / .ge / .pil 等），这里逐条列出已知合法位置
   const pattern = new RegExp(`(?<![\\w-])color:\\s*var\\(${token}\\)`, 'g');
-  const hits = [...paipanHtml.matchAll(pattern)];
+  const hits = [...siteCss.matchAll(pattern)];
   for (const hit of hits) {
-    const around = paipanHtml.slice(Math.max(0, hit.index - 120), hit.index);
+    const around = siteCss.slice(Math.max(0, hit.index - 120), hit.index);
     const selector = around.split('}').pop().split('{')[0].trim();
     const darkScoped = /\.(pil|bz|ge)\b/.test(selector);
-    if (!darkScoped) failures.push(`paipan.html 的 ${selector || '(未知选择器)'} 仍用 ${token} 当浅底文字色`);
+    if (!darkScoped) failures.push(`site.css 的 ${selector || '(未知选择器)'} 仍用 ${token} 当浅底文字色`);
   }
   const jsHits = [...appJs.matchAll(new RegExp(`color:var\\(${token}\\)`, 'g'))];
   if (jsHits.length) failures.push(`app.js 仍用 ${token} 当文字色（应改用 -ink / -on-dark 版本）`);

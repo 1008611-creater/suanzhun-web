@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>在线排盘 · 命理排盘工具</title>
+<title>在线排盘 · 算的准</title>
 <meta name="description" content="输入出生年月日时与出生地，自动换算真太阳时，输出四柱八字、五行旺衰、大运流年、八宅命卦、姓名五格与合婚参考。计算全部在浏览器本地完成。">
 <meta name="theme-color" content="#9e366f">
 <link rel="canonical" href="https://suanzhun.cauai.fun/paipan.html">
@@ -20,205 +20,81 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="算的准 · 在线排盘">
 <meta name="twitter:card" content="summary_large_image">
-<style>
-/* Hallmark · genre: editorial · macrostructure: Workbench · design-system: DESIGN.md */
-:root{
-  --bg:oklch(98% .018 355); --card:oklch(100% .005 350 / .84); --card2:oklch(96% .025 350 / .74);
-  --line:oklch(86% .055 350); --gold:oklch(68% .12 20); --gold2:oklch(50% .15 350); --jade:oklch(60% .09 165);
-  --ink:oklch(28% .035 345); --dim:oklch(48% .045 345); --dim2:oklch(51% .035 345);
-  /* 浅底文字色：对实际卡片底色实测 >= 4.5:1（大字号 >= 3:1） */
-  --gold-ink:oklch(52% .12 20); --jade-ink:oklch(49.4% .09 165);
-  --xiong-ink:oklch(52.2% .14 25); --xiong-strong-ink:oklch(44% .16 25);
-  /* 深色芯片文字色：对 #0f131b 与热点底色双重验证 >= 4.5:1 */
-  --ink-on-dark:oklch(87% .012 345); --dim-on-dark:oklch(64% .045 345);
-  --jade-on-dark:oklch(62.2% .09 165); --xiong-on-dark:oklch(64.9% .14 25);
-  --xiong-strong-on-dark:oklch(72% .16 25); --gold-on-dark:oklch(70% .12 20);
-  --wx-mu:#4caf7d; --wx-huo:#e0605c; --wx-tu:#c8a45c; --wx-jin:#c3c8d8; --wx-shui:#5a93dd;
-  --wx-mu-ink:oklch(49.3% .10 165); --wx-huo-ink:oklch(52.3% .15 25); --wx-tu-ink:oklch(50.7% .09 85);
-  --wx-jin-ink:oklch(50.6% .03 265); --wx-shui-ink:oklch(50.6% .10 255);
-  --wx-mu-soft:rgba(76,175,125,.4); --wx-huo-soft:rgba(224,96,92,.4); --wx-tu-soft:rgba(200,164,92,.4);
-  --wx-jin-soft:rgba(195,200,216,.4); --wx-shui-soft:rgba(90,147,221,.4);
-}
-*{box-sizing:border-box;margin:0;padding:0}html{overflow-x:clip}
-body{
-  background:radial-gradient(900px 480px at 12% -12%,oklch(92% .06 350 / .75) 0%,transparent 68%),radial-gradient(700px 420px at 100% 8%,oklch(95% .05 45 / .55) 0%,transparent 70%),var(--bg) fixed;
-  color:var(--ink);
-  font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Source Han Sans SC",system-ui,sans-serif;
-  line-height:1.7; -webkit-font-smoothing:antialiased; padding:28px 18px 90px;
-}
-.wrap{max-width:1080px;margin:0 auto}
-.hero{text-align:center;padding:14px 0 30px;animation:fadeUp .65s cubic-bezier(.16,1,.3,1) both}
-.hero h1{font-size:30px;letter-spacing:.22em;font-weight:600;
-  background:linear-gradient(180deg,var(--gold2),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero .sub{margin-top:10px;color:var(--dim);font-size:13px;letter-spacing:.14em}
-.hero .rule{width:64px;height:1px;margin:18px auto 0;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-
-.card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);
-  border-radius:16px;padding:22px 22px;margin-bottom:20px;box-shadow:0 12px 34px oklch(50% .05 350 / .08);backdrop-filter:blur(8px);animation:fadeUp .65s cubic-bezier(.16,1,.3,1) both}
-.card h2{font-size:15px;letter-spacing:.16em;color:var(--gold2);font-weight:600;margin-bottom:16px;
-  display:flex;align-items:center;gap:10px}
-.card h2::before{content:"";width:3px;height:14px;background:var(--gold);border-radius:2px;display:inline-block}
-.hint{color:var(--dim2);font-size:12px;line-height:1.9}
-
-.form{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.f{display:flex;flex-direction:column;gap:7px}
-.f label{font-size:12px;color:var(--dim);letter-spacing:.08em}
-.f input,.f select{background:oklch(100% .005 350 / .78);border:1px solid var(--line);color:var(--ink);
-  border-radius:10px;padding:11px 12px;min-height:44px;font-size:14px;font-family:inherit;outline:none;transition:.18s;width:100%}
-.f input:focus,.f select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,164,92,.13)}
-.f.wide{grid-column:span 2}
-.actions{grid-column:span 4;display:flex;gap:12px;margin-top:6px;flex-wrap:wrap}
-button{font-family:inherit;cursor:pointer;border:none;border-radius:10px;font-size:14px;letter-spacing:.1em;transition:.18s}
-.btn-main{background:var(--gold2);color:oklch(99% .01 355);font-weight:700;padding:13px 34px;box-shadow:0 10px 24px oklch(50% .15 350 / .18)}
-.btn-main:hover{filter:brightness(1.08);transform:translateY(-1px)}
-.btn-ghost{background:transparent;border:0;border-bottom:1px solid var(--line);color:var(--dim);padding:13px 12px;border-radius:0}
-.btn-ghost:hover{border-color:var(--gold);color:var(--gold2)}
-
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:860px){.form{grid-template-columns:1fr 1fr}.f.wide{grid-column:1/-1}.actions{grid-column:1/-1}.grid2{grid-template-columns:1fr}}
-
-/* 四柱 */
-.pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.pil{background:#0f131b;border:1px solid var(--line);border-radius:14px;padding:16px 10px;text-align:center;position:relative;overflow:hidden}
-.pil .pos{font-size:11px;color:var(--dim-on-dark);letter-spacing:.2em;margin-bottom:12px}
-.pil .gz{font-size:40px;line-height:1.15;font-weight:600;letter-spacing:.04em;
-  background:linear-gradient(180deg,#fff,oklch(66% .14 350));-webkit-background-clip:text;background-clip:text;color:transparent}
-.pil .gz .g{display:block}
-.pil .ss{display:inline-block;margin-top:12px;font-size:12px;color:var(--jade-on-dark);border:1px solid rgba(79,179,163,.35);
-  border-radius:20px;padding:2px 12px;background:rgba(79,179,163,.08)}
-.pil .cang{margin-top:12px;font-size:11px;color:var(--dim-on-dark);letter-spacing:.06em}
-.pil.day{border-color:rgba(200,164,92,.55);box-shadow:0 0 0 1px rgba(200,164,92,.18),0 8px 26px rgba(200,164,92,.10)}
-.pil.day::after{content:"日主";position:absolute;top:8px;right:8px;font-size:10px;color:var(--gold-on-dark);letter-spacing:.1em}
-
-/* 五行条 */
-.wxrow{display:flex;align-items:center;gap:14px;margin-bottom:11px}
-.wxname{width:34px;font-size:14px;text-align:center;font-weight:600;color:var(--ink)}
-.wxbar{flex:1;height:14px;background:#0e1219;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
-.wxfill{height:100%;border-radius:8px;transition:width .5s ease}
-.wxval{width:64px;text-align:right;font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
-
-/* 表 */
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:9px 8px;text-align:center;border-bottom:1px solid var(--line)}
-th{color:var(--dim);font-weight:500;font-size:12px;letter-spacing:.08em}
-td{font-variant-numeric:tabular-nums}
-tr.now{background:rgba(200,164,92,.10)}
-tr.now td{color:var(--gold2);font-weight:600}
-.tag{display:inline-block;font-size:11px;padding:1px 9px;border-radius:20px;border:1px solid var(--line);color:var(--dim)}
-.tag.j{color:var(--jade-ink);border-color:rgba(79,179,163,.4);background:rgba(79,179,163,.08)}
-.tag.x{color:var(--xiong-ink);border-color:rgba(224,128,128,.35);background:rgba(224,128,128,.07)}
-.tag.dx{color:var(--xiong-strong-ink);border-color:rgba(255,120,120,.5);background:rgba(255,120,120,.12)}
-
-/* 八宅 */
-.bazhai{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.bz{border:1px solid var(--line);border-radius:12px;padding:13px 10px;text-align:center;background:#0f131b}
-.bz .dir{font-size:11px;color:var(--dim-on-dark);letter-spacing:.12em}
-.bz .star{font-size:19px;font-weight:600;margin:7px 0 5px;color:var(--ink-on-dark)}
-.bz .deg{font-size:10px;color:var(--dim-on-dark);font-variant-numeric:tabular-nums}
-.bz.j{border-color:rgba(79,179,163,.42);background:linear-gradient(0deg,rgba(79,179,163,.10),rgba(79,179,163,.10)),#0f131b}
-.bz.j .star{color:var(--jade-on-dark)}
-.bz.x .star{color:var(--xiong-on-dark)}
-.bz.dx{border-color:rgba(255,110,110,.5);background:linear-gradient(0deg,rgba(255,110,110,.10),rgba(255,110,110,.10)),#0f131b}
-.bz.dx .star{color:var(--xiong-strong-on-dark)}
-@media(max-width:640px){.bazhai{grid-template-columns:1fr 1fr}.pillars{grid-template-columns:1fr 1fr}.card{padding:20px 16px}}
-
-.kv{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px}
-.kv:last-child{border-bottom:none}
-.kv .k{color:var(--dim)}
-.kv .v{color:var(--ink);font-weight:500}
-.big{font-size:22px;color:var(--gold2);font-weight:700;letter-spacing:.06em}
-.note{font-size:12px;color:var(--dim2);line-height:1.85;margin-top:12px;padding-left:12px;border-left:2px solid var(--line)}
-.ge{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;text-align:center}
-.ge .g1{background:#0f131b;border:1px solid var(--line);border-radius:12px;padding:12px 6px}
-.ge .n{font-size:11px;color:var(--dim-on-dark);letter-spacing:.1em}
-.ge .num{font-size:26px;font-weight:700;margin:5px 0;color:var(--ink-on-dark)}
-.ge .txt{font-size:11px;color:var(--dim-on-dark);line-height:1.6}
-#result{display:none;scroll-margin-top:16px}
-button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
-.footer{text-align:center;color:var(--dim2);font-size:11px;margin-top:34px;letter-spacing:.1em;line-height:2}
-
-/* 结果页收尾：把「看完就走」接成可保存、可联系 */
-.adv-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
-@media(max-width:640px){.adv-wrap{grid-template-columns:1fr}}
-.adv{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px 15px}
-.adv-t{font-size:12px;letter-spacing:.12em;color:var(--gold2);margin-bottom:8px}
-.adv p{font-size:13px;line-height:1.9;color:var(--dim)}
-.card.next{border-color:oklch(78% .10 350);background:linear-gradient(180deg,oklch(97% .045 350 / .92),var(--card2))}
-.next-lead{color:var(--dim);font-size:13.5px;line-height:1.95;margin-bottom:16px}
-.next-lead b{color:var(--gold2);font-weight:600}
-.wx{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 15px;border:1px dashed var(--line);
-  border-radius:12px;background:oklch(100% .005 350 / .6)}
-.wx-label{font-size:12px;color:var(--dim2);letter-spacing:.14em}
-.wx-id{font-size:19px;font-weight:700;color:var(--gold2);letter-spacing:.06em;font-variant-numeric:tabular-nums}
-.btn-copy{margin-left:auto;background:transparent;border:1px solid var(--line);color:var(--dim);border-radius:8px;
-  padding:9px 14px;font-size:12.5px;min-height:44px}
-.btn-copy:hover{border-color:var(--gold);color:var(--gold2)}
-.next-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
-.next-actions .btn-main,.next-actions .btn-ghost{margin:0}
-
-/* 打印：只留报告本体，去掉背景纹理与交互控件，方便存 PDF 或发给别人 */
-@media print{
-  body{background:#fff;padding:0;color:#000}
-  .hero,.card:not(#result .card),#result > .card.next{display:none!important}
-  .card,#result{display:block!important;box-shadow:none;border:1px solid #ddd;background:#fff;
-    break-inside:avoid;page-break-inside:avoid;backdrop-filter:none}
-  .card h2{color:#000}
-  .pil,.bz,.ge .g1{background:#fff!important;border-color:#bbb}
-  .pil .pos,.pil .cang,.bz .dir,.bz .deg,.ge .n,.ge .txt{color:#333!important}
-  .pil .gz,.ge .num,.bz .star{color:#000!important;-webkit-text-fill-color:#000;background:none}
-  .footer{display:block;margin-top:18px}
-  @page{margin:14mm}
-}
-</style>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
 <div class="wrap">
-  <div class="hero">
-    <h1>命理排盘</h1>
-    <div class="sub">八字 · 真太阳时 · 大运流年 · 八宅命卦 · 姓名五格</div>
-    <div class="rule"></div>
-  </div>
 
-  <div class="card">
-    <h2>命主信息</h2>
-    <div class="form">
-      <div class="f"><label for="name">姓名</label><input id="name" placeholder="请输入姓名" autocomplete="off"></div>
-      <div class="f"><label for="gender">性别</label><select id="gender"><option>男</option><option>女</option></select></div>
-      <div class="f"><label for="date">出生日期（公历）</label><input id="date" type="date"></div>
-      <div class="f"><label for="time">出生时间</label><input id="time" type="time"></div>
-      <div class="f wide"><label for="city">出生地</label><select id="city"></select></div>
-      <div class="f"><label for="lng">经度（可改）</label><input id="lng" inputmode="decimal" placeholder="选择出生地后自动填入"></div>
-      <div class="f"><label for="ts">时制</label><select id="ts"><option value="1">真太阳时（推荐）</option><option value="0">钟表时间</option></select></div>
-      <div class="actions">
-        <button class="btn-main" id="go">开始排盘</button>
-        <button class="btn-ghost" id="demo">合婚：填入对方</button>
-        <button class="btn-ghost" id="reset">重置</button>
+  <header class="masthead">
+    <div class="brand"><a class="brand-link" href="/">算的准</a></div>
+    <div class="brand-tag">排盘在浏览器本地完成，输入不上传</div>
+  </header>
+
+  <div class="workbench">
+
+    <section class="rail" aria-labelledby="rail-title">
+      <h1 id="rail-title">命理排盘</h1>
+      <p class="rail-sub">八字 · 真太阳时 · 大运流年 · 八宅命卦 · 姓名五格</p>
+      <div class="rail-rule" aria-hidden="true"></div>
+
+      <div class="card">
+        <h2>命主信息</h2>
+        <div class="form">
+          <div class="f"><label for="name">姓名</label><input id="name" placeholder="请输入姓名" autocomplete="off"></div>
+          <div class="f"><label for="gender">性别</label><select id="gender"><option>男</option><option>女</option></select></div>
+          <div class="f"><label for="date">出生日期（公历）</label><input id="date" type="date"></div>
+          <div class="f"><label for="time">出生时间</label><input id="time" type="time"></div>
+          <div class="f wide"><label for="city">出生地</label><select id="city"></select></div>
+          <div class="f"><label for="lng">经度（可改）</label><input id="lng" inputmode="decimal" placeholder="选择出生地后自动填入"></div>
+          <div class="f"><label for="ts">时制</label><select id="ts"><option value="1">真太阳时（推荐）</option><option value="0">钟表时间</option></select></div>
+          <div class="actions">
+            <button class="btn-main" id="go" type="button">开始排盘</button>
+            <button class="btn-ghost" id="demo" type="button">合婚：填入对方</button>
+            <button class="btn-ghost" id="reset" type="button">重置</button>
+          </div>
+        </div>
+        <p class="hint hint-spaced">出生地只影响「真太阳时」的经度修正，一般差异在 10–30 分钟内，跨时辰时才会改变时柱。</p>
       </div>
-    </div>
-    <div class="hint" style="margin-top:14px">出生地只影响「真太阳时」的经度修正，一般差异在 10–30 分钟内，跨时辰时才会改变时柱。</div>
+
+      <div class="card" id="partnerBox" hidden>
+        <h2>合婚对象（可选）</h2>
+        <div class="form">
+          <div class="f"><label for="p_name">姓名</label><input id="p_name" placeholder="对方姓名" autocomplete="off"></div>
+          <div class="f"><label for="p_gender">性别</label><select id="p_gender"><option>女</option><option>男</option></select></div>
+          <div class="f"><label for="p_date">出生日期（公历）</label><input id="p_date" type="date"></div>
+          <div class="f"><label for="p_time">出生时间</label><input id="p_time" type="time"></div>
+          <div class="f wide"><label for="p_lng">出生地经度</label><input id="p_lng" inputmode="decimal" placeholder="留空则沿用主盘经度"></div>
+          <div class="f"><label for="p_ts">时制</label><select id="p_ts"><option value="1">真太阳时</option><option value="0">钟表时间</option></select></div>
+        </div>
+        <p class="hint hint-spaced">填好后点「开始排盘」，页面底部会多出一块合婚分析。</p>
+      </div>
+    </section>
+
+    <section class="canvas" aria-label="排盘报告">
+      <div class="canvas-empty" id="canvasEmpty">
+        <div class="canvas-seal" aria-hidden="true">盘</div>
+        <p class="canvas-empty-title">报告区 · 待排盘</p>
+        <p class="canvas-empty-desc">在左侧填好姓名、出生日期与出生时间，点「开始排盘」。四柱八字、五行旺衰、大运流年、八宅命卦、姓名五格和合婚都会按顺序出现在这里。</p>
+        <ol class="canvas-empty-list">
+          <li><span>01</span>命主基本信息</li>
+          <li><span>02</span>四柱与十神</li>
+          <li><span>03</span>五行旺衰与用忌神</li>
+          <li><span>04</span>大运与流年</li>
+          <li><span>05</span>八宅命卦与方位</li>
+          <li><span>06</span>姓名五格与建议</li>
+        </ol>
+        <p class="canvas-empty-note">所有计算在浏览器本地完成，输入不上传。</p>
+      </div>
+      <div id="result" role="region" aria-label="排盘结果" aria-live="polite" aria-busy="false" hidden></div>
+    </section>
+
   </div>
 
-  <div class="card" id="partnerBox" style="display:none">
-    <h2>合婚对象（可选）</h2>
-    <div class="form">
-      <div class="f"><label for="p_name">姓名</label><input id="p_name" placeholder="对方姓名" autocomplete="off"></div>
-      <div class="f"><label for="p_gender">性别</label><select id="p_gender"><option>女</option><option>男</option></select></div>
-      <div class="f"><label for="p_date">出生日期（公历）</label><input id="p_date" type="date"></div>
-      <div class="f"><label for="p_time">出生时间</label><input id="p_time" type="time"></div>
-      <div class="f wide"><label for="p_lng">出生地经度</label><input id="p_lng" inputmode="decimal" placeholder="留空则沿用主盘经度"></div>
-      <div class="f"><label for="p_ts">时制</label><select id="p_ts"><option value="1">真太阳时</option><option value="0">钟表时间</option></select></div>
-    </div>
-    <div class="hint" style="margin-top:14px">填好后点「开始排盘」，页面底部会多出一块合婚分析。</div>
-  </div>
-
-  <div id="result" role="region" aria-label="排盘结果" aria-live="polite" aria-busy="false"></div>
-
-  <div class="footer">
+  <footer class="footer">
     本页为传统命理文化推演工具，结果仅供文化参考与自我反思<br>
     不构成医疗、法律、投资建议；健康问题请以执业医师意见为准
-  </div>
+  </footer>
 </div>
 <script src="bazi.js"></script>
 <script src="analysis.js"></script>

@@ -8,28 +8,9 @@
   var GAN = B.GAN,
     ZHI = B.ZHI,
     CANG = B.CANG;
-  /* 五行配色统一走设计令牌：填充用原色，文字用对浅底达标的 -ink 版本 */
-  var WX_COLOR = {
-    木: 'var(--wx-mu)',
-    火: 'var(--wx-huo)',
-    土: 'var(--wx-tu)',
-    金: 'var(--wx-jin)',
-    水: 'var(--wx-shui)',
-  };
-  var WX_INK = {
-    木: 'var(--wx-mu-ink)',
-    火: 'var(--wx-huo-ink)',
-    土: 'var(--wx-tu-ink)',
-    金: 'var(--wx-jin-ink)',
-    水: 'var(--wx-shui-ink)',
-  };
-  var WX_SOFT = {
-    木: 'var(--wx-mu-soft)',
-    火: 'var(--wx-huo-soft)',
-    土: 'var(--wx-tu-soft)',
-    金: 'var(--wx-jin-soft)',
-    水: 'var(--wx-shui-soft)',
-  };
+  /* 五行配色统一走设计令牌。文字色与填充色都在 site.css 里按 is-mu / is-huo 等类名定义，
+     渲染时只切类名，不写内联 style（CSP style-src 'self' 禁止内联样式生效）。 */
+  var WX_KEY = { 木: 'mu', 火: 'huo', 土: 'tu', 金: 'jin', 水: 'shui' };
 
   /* ---------- 城市经度表 ---------- */
   var CITY = [
@@ -180,7 +161,9 @@
     var box = $('result');
     box.setAttribute('aria-busy', 'true');
     box.innerHTML = '';
-    box.style.display = 'block';
+    box.hidden = false;
+    var ce = $('canvasEmpty');
+    if (ce) ce.hidden = true;
 
     /* --- 1. 基本信息 --- */
     var c1 = el('div', 'card');
@@ -241,7 +224,7 @@
       el(
         'div',
         'note',
-        '日主 <b style="color:var(--gold2)">' +
+        '日主 <b class="em-accent">' +
           GAN[p.dayGan] +
           '</b>（' +
           p.dayGanWx +
@@ -274,30 +257,20 @@
       var pct = total > 0 ? (v / total) * 100 : 0;
       var isYong = ws.yong.indexOf(w) >= 0;
       var isJi = ws.ji.indexOf(w) >= 0;
-      var mark = isYong
-        ? ' <span style="color:var(--jade-ink);font-size:11px">用</span>'
-        : isJi
-          ? ' <span style="color:var(--xiong-ink);font-size:11px">忌</span>'
-          : '';
-      wbox.innerHTML +=
-        '<div class="wxrow"><div class="wxname" style="color:' +
-        WX_INK[w] +
-        '">' +
-        w +
-        mark +
-        '</div>' +
-        '<div class="wxbar"><div class="wxfill" style="width:' +
-        pct.toFixed(1) +
-        '%;background:linear-gradient(90deg,' +
-        WX_SOFT[w] +
-        ',' +
-        WX_COLOR[w] +
-        ')"></div></div>' +
-        '<div class="wxval">' +
-        v.toFixed(2) +
-        ' · ' +
-        pct.toFixed(1) +
-        '%</div></div>';
+      var key = WX_KEY[w];
+      var row = el('div', 'wxrow');
+      var name = el('div', 'wxname is-' + key, w);
+      if (isYong) name.appendChild(el('span', 'wx-mark is-yong', '用'));
+      else if (isJi) name.appendChild(el('span', 'wx-mark is-ji', '忌'));
+      var bar = el('div', 'wxbar');
+      var fill = el('div', 'wxfill is-' + key);
+      /* CSSOM 赋值不受 CSP style-src 限制；受限制的是 HTML 里的 style 属性。 */
+      fill.style.width = pct.toFixed(1) + '%';
+      bar.appendChild(fill);
+      row.appendChild(name);
+      row.appendChild(bar);
+      row.appendChild(el('div', 'wxval', v.toFixed(2) + ' · ' + pct.toFixed(1) + '%'));
+      wbox.appendChild(row);
     });
     c3.appendChild(wbox);
     var g2 = el('div', 'grid2');
@@ -321,7 +294,7 @@
         '同党占比 ' +
           (ws.ratio * 100).toFixed(1) +
           '%。' +
-          '五行最旺为 <b style="color:var(--gold2)">' +
+          '五行最旺为 <b class="em-accent">' +
           ws.most +
           '</b>，最弱为 <b>' +
           ws.least +
@@ -346,7 +319,7 @@
         (isNow ? 'now' : '') +
         '"><td>' +
         (i + 1) +
-        '</td><td style="font-size:15px;letter-spacing:.06em">' +
+        '</td><td class="gz">' +
         d.gz +
         '</td>' +
         '<td>' +
@@ -411,7 +384,7 @@
           (isNow ? 'now' : '') +
           '"><td>' +
           x.year +
-          '</td><td style="font-size:15px">' +
+          '</td><td class="gz">' +
           x.gz +
           '</td>' +
           '<td>' +
@@ -424,7 +397,7 @@
           '">' +
           r.label +
           '</span></td>' +
-          '<td style="text-align:left;color:var(--dim);font-size:12px">' +
+          '<td class="lead">' +
           (LN_MEAN[x.shiShen] || '') +
           '</td></tr>';
       });
@@ -482,7 +455,7 @@
       })
       .forEach(function (f) {
         det.innerHTML +=
-          '<div class="kv"><span class="k" style="min-width:96px">' +
+          '<div class="kv"><span class="k wide">' +
           f.dir +
           ' · ' +
           f.star +
@@ -490,7 +463,7 @@
           jClass(f.ji) +
           '">' +
           f.ji +
-          '</span></span><span class="v" style="font-weight:400;font-size:12px;color:var(--dim);text-align:right;max-width:66%">' +
+          '</span></span><span class="v plain-r">' +
           f.mean +
           '</span></div>';
       });
@@ -511,7 +484,7 @@
     var lpg = el('div', 'grid2');
     lpg.innerHTML =
       '<div>' +
-      kv('床头朝向', '<span class="big" style="font-size:19px">' + lp.bedHead + '</span>（吉方）') +
+      kv('床头朝向', '<span class="big big-sm">' + lp.bedHead + '</span>（吉方）') +
       kv('书桌 / 办公位', lp.desk) +
       kv('神位 / 供桌', lp.altar) +
       '</div>' +
@@ -527,7 +500,7 @@
       lph +=
         '<tr><td>' +
         r.dir +
-        '</td><td style="font-size:12px">' +
+        '</td><td class="sm">' +
         r.deg +
         '</td><td>' +
         r.star +
@@ -536,7 +509,7 @@
         '">' +
         r.ji +
         '</span></td>' +
-        '<td style="text-align:left;font-size:12px;color:var(--dim)">' +
+        '<td class="lead">' +
         r.use +
         '</td></tr>';
     });
@@ -606,11 +579,7 @@
       can.style.marginTop = '10px';
       can.innerHTML = ca.notes
         .map(function (s) {
-          return (
-            '<div class="kv"><span class="v" style="font-weight:400;text-align:left;font-size:12px;color:var(--dim)">· ' +
-            s +
-            '</span></div>'
-          );
+          return '<div class="kv"><span class="v plain">· ' + s + '</span></div>';
         })
         .join('');
       c6c.appendChild(can);
@@ -632,14 +601,11 @@
     mag.innerHTML =
       '<div>' +
       kv('配偶宫', ma.palace.zhi + '（' + ma.palace.wx + ' · ' + ma.palace.shiShen + '）') +
-      kv(
-        '配偶宫解读',
-        '<span style="font-weight:400;font-size:12px;color:var(--dim);text-align:left">' + ma.palace.text + '</span>'
-      ) +
+      kv('配偶宫解读', '<span class="plain">' + ma.palace.text + '</span>') +
       '</div>' +
       '<div>' +
       kv('感情星', ma.starName + ' 占 ' + Math.round(ma.starPct * 100) + '%') +
-      kv('整体倾向', '<span class="big" style="font-size:19px">' + ma.level + '</span>') +
+      kv('整体倾向', '<span class="big big-sm">' + ma.level + '</span>') +
       '</div>';
     c6d.appendChild(mag);
     if (ma.relations.length) {
@@ -674,11 +640,11 @@
           (y.year === nowYear ? ' class="now"' : '') +
           '><td>' +
           y.year +
-          '</td><td style="font-size:15px">' +
+          '</td><td class="gz">' +
           y.gz +
           '</td><td>' +
           (y.year - p.input.year + 1) +
-          '</td><td style="text-align:left;font-size:12px;color:var(--dim)">' +
+          '</td><td class="lead">' +
           y.why +
           '</td></tr>';
       });
@@ -720,8 +686,8 @@
           '<div class="g1"><div class="n">' +
           k +
           '</div>' +
-          '<div class="num" style="color:' +
-          (d5.ji === '吉' ? 'var(--jade-on-dark)' : 'var(--xiong-on-dark)') +
+          '<div class="num ' +
+          (d5.ji === '吉' ? 'j' : 'x') +
           '">' +
           d5.num +
           '</div>' +
@@ -799,7 +765,7 @@
           nah +=
             '<tr><td>' +
             k.posLabel +
-            '</td><td style="font-weight:600">' +
+            '</td><td class="strong">' +
             k.strokes +
             ' 画</td>' +
             '<td>' +
@@ -823,10 +789,10 @@
             '">' +
             k.detail['总格'].ji +
             '</span></td>' +
-            '<td style="font-size:12px">' +
+            '<td class="sm">' +
             k.sanCai.level +
             '</td>' +
-            '<td style="font-size:13px;letter-spacing:.08em">' +
+            '<td class="chars">' +
             (k.chars.length ? k.chars.map(esc).join(' ') : '—') +
             '</td></tr>';
         });
@@ -874,7 +840,7 @@
       if (he.complement.length) {
         comp.innerHTML = he.complement
           .map(function (s) {
-            return '<div class="kv"><span class="v" style="font-weight:400">· ' + s + '</span></div>';
+            return '<div class="kv"><span class="v free">· ' + s + '</span></div>';
           })
           .join('');
       } else {
@@ -960,7 +926,7 @@
     }
     var p = calc(opt);
     var po = readForm('p_', opt.lng);
-    if (po && po.year && document.getElementById('partnerBox').style.display !== 'none') {
+    if (po && po.year && !document.getElementById('partnerBox').hidden) {
       var q = calc(po);
       p.partner = q;
       p.partnerInput = po;
@@ -976,12 +942,14 @@
     $('p_date').value = '';
     $('p_time').value = '';
     $('p_lng').value = '';
-    $('result').style.display = 'none';
+    $('result').hidden = true;
     $('result').innerHTML = '';
+    var ce = $('canvasEmpty');
+    if (ce) ce.hidden = false;
   });
   $('demo').addEventListener('click', function () {
     var b = document.getElementById('partnerBox');
-    b.style.display = b.style.display === 'none' ? 'block' : 'none';
+    b.hidden = !b.hidden;
   });
   window.__runDemo = run;
 })();
