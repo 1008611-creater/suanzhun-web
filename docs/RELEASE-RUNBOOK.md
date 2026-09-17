@@ -28,19 +28,34 @@ npm run deploy                # 正式发布
 | ---------------------- | ------------------------------------------ | ------------------------------------------ |
 | `--dry-run`            | 关闭                                       | 只做质量门、哈希比对与探活，不上传、不备份 |
 | `--skip-check`         | 关闭                                       | 跳过质量门，仅用于排障，正常发布不要使用   |
+| `--with-infra`         | 关闭                                       | 一并同步 Nginx / Compose 定义并重建容器    |
 | `SUANZHUN_HOST`        | `root@38.76.193.254`                       | 发布目标主机                               |
 | `SUANZHUN_SSH_KEY`     | `C:/Users/lsb/.ssh/haika_niannian_ed25519` | SSH 私钥路径，只从本机读取                 |
 | `SUANZHUN_REMOTE_DIR`  | `/srv/suanzhun/public`                     | 线上静态目录                               |
 | `SUANZHUN_BACKUP_ROOT` | `/srv/suanzhun/backups`                    | 备份根目录                                 |
 | `SUANZHUN_BASE_URL`    | `https://suanzhun.cauai.fun`               | 探活基地址                                 |
+| `SUANZHUN_INFRA_DIR`   | `/srv/suanzhun`                            | 基础设施文件目录                           |
 
 私钥路径只作为运行时参数使用，不写入仓库、不落盘到工作区。
 
 ## 上线文件清单
 
-`index.html`、`paipan.html`、`app.js`、`analysis.js`、`bazi.js`、`robots.txt`、`sitemap.xml`。
+`index.html`、`paipan.html`、`404.html`、`app.js`、`analysis.js`、`bazi.js`、`favicon.svg`、`apple-touch-icon.png`、`og-image.png`、`robots.txt`、`sitemap.xml`。
 
-这 7 个文件与 `scripts/deploy.mjs` 中的 `FILES` 常量一一对应；新增上线文件必须同时改这里和脚本，否则不会被发布。
+这些文件与 `scripts/deploy.mjs` 中的 `FILES` 常量一一对应；新增上线文件必须同时改这里和脚本，否则不会被发布。
+
+## 基础设施文件
+
+`deploy/nginx.conf` 与 `deploy/docker-compose.yml` 上传到 `/srv/suanzhun/`，只在 `--with-infra` 时同步：
+
+```powershell
+npm run deploy -- --with-infra --dry-run   # 预览基础设施差异
+npm run deploy -- --with-infra             # 同步并重建容器
+```
+
+重建流程会先校验 Nginx 配置，再判断现有容器是否由 compose 管理；早期手工 `docker run` 起的容器会被移除后交给 compose 接管。容器名必须保持 `suanzhun-web`，Caddy 通过这个服务名反代，改名会断站。
+
+改这两个文件属于基础设施变更，按 L3 处理：先备份、先 dry-run、确认后再执行。
 
 ## 发布后人工确认
 
@@ -89,3 +104,13 @@ cp -a /srv/suanzhun/backups/<时间戳>/. /srv/suanzhun/public/
 | 备份     | 未改动线上文件（仅新增脚本与文档）                                    |
 | 变更文件 | 无上线文件变化                                                        |
 | 发布后   | `npm run deploy -- --dry-run` 显示 7 个文件哈希一致、7 个地址全部 200 |
+
+### 2026-09-17 0.4.0 站点完备性与基础设施
+
+补齐图标、分享卡片、SEO 元信息、404 页，并把容器纳入 compose 管理。
+
+| 项目     | 值                                                       |
+| -------- | -------------------------------------------------------- |
+| 备份     | 发布时记录 `/srv/suanzhun/backups/<时间戳>`              |
+| 变更文件 | 新增 favicon / apple-touch-icon / og-image / 404.html 等 |
+| 发布后   | 待填：375/1280px 无溢出，新增资源地址全部 200            |

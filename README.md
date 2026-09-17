@@ -27,6 +27,14 @@ npm test               # 排盘引擎回归测试
 npm run release:check  # 以上全部串行执行
 ```
 
+## 站点资源
+
+```powershell
+npm run assets   # 重新生成 favicon.svg / apple-touch-icon.png / og-image.png
+```
+
+图标与分享卡片由 `scripts/build-assets.mjs` 生成，产物已提交进仓库；只有调整品牌视觉时才需要重跑。
+
 ## 发布
 
 ```powershell
@@ -45,6 +53,7 @@ HTML 页面为手工排版，已在 `.prettierignore` 中排除，避免格式�
 ```text
 index.html       首页与服务说明
 paipan.html      排盘输入与结果页面
+404.html         找不到页面时的兜底页
 app.js           表单、状态和结果渲染
 bazi.js          历法与四柱计算
 analysis.js      五行、八宅、姓名和合婚分析
@@ -52,6 +61,7 @@ scripts/         本地质量与发布前检查
 tests/           无网络的回归测试
 tests/helpers/   在 Node 中加载浏览器端 UMD 模块的测试夹具
 docs/            PRD、架构、发布和审计文档
+deploy/          服务器上的 Nginx 与 Compose 定义
 ```
 
 ## 产品边界
@@ -63,4 +73,5 @@ docs/            PRD、架构、发布和审计文档
 - 域名：<https://suanzhun.cauai.fun>
 - 服务目录：`/srv/suanzhun/public`
 - Web 容器：`suanzhun-web`
+- 基础设施：`/srv/suanzhun/nginx.conf` 与 `/srv/suanzhun/docker-compose.yml`，由仓库 `deploy/` 同步
 - 发布前必须保留远端备份，并完成 `npm run release:check`。
