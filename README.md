@@ -27,6 +27,15 @@ npm test               # 排盘引擎回归测试
 npm run release:check  # 以上全部串行执行
 ```
 
+## 发布
+
+```powershell
+npm run deploy -- --dry-run   # 预览差异，不写入
+npm run deploy                # 正式发布
+```
+
+发布脚本会依次执行质量门、远端备份、差异上传、哈希复核与线上探活，细节见 [docs/RELEASE-RUNBOOK.md](docs/RELEASE-RUNBOOK.md)。
+
 检查内容包括：核心文件存在、JavaScript 语法、页面脚本引用、关键入口、响应式与减少动效标记、排盘真值与合婚输出边界。
 
 HTML 页面为手工排版，已在 `.prettierignore` 中排除，避免格式化破坏既有布局。
