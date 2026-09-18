@@ -55,6 +55,12 @@ svg {
   display: none !important;
 }
 .brand-link {
+  /* 手机上这个链接只有 68×33，低于 44px 触控标准。
+     撑成 44px 高的命中区，视觉字号不变。 */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--s-1);
   color: inherit;
   text-decoration: none;
 }

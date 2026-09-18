@@ -187,6 +187,12 @@ const motionRespectsReducedMotion =
 const textureHiddenInPrint = /body::before[\s\S]{0,80}?body::after\s*\{[\s\S]*?display:\s*none\s*!important/u.test(
   printCss
 );
+/**
+ * 触控目标契约：手机上排盘页的品牌链接曾经只有 68×33，低于 44px 命中标准，
+ * 手指点它经常点不中。这里锁死它被撑到至少 44px 高，并保持行内弹性布局。
+ */
+const brandLinkCss = cssBlock(siteCss, /\.brand-link\s*\{/u);
+const brandLinkTouchTarget = /min-height:\s*44px/u.test(brandLinkCss) && /display:\s*inline-flex/u.test(brandLinkCss);
 /* 样式与脚本都不能内联：CSP 的 style-src/script-src 都是 'self'。 */
 const hasNoInlineStyle = !/<style\b/iu.test(home + paipan) && !/\sstyle\s*=/iu.test(home + paipan);
 const pagesLinkTokens = /assets\/tokens\.css/u.test(home) && /assets\/tokens\.css/u.test(paipan);
@@ -451,6 +457,7 @@ const checks = [
   ['环境漂移动效存在', hasAmbientDrift],
   ['纹理与漂移都尊重系统减少动效设置', motionRespectsReducedMotion],
   ['打印时撤掉纹理与漂移层', textureHiddenInPrint],
+  ['品牌链接触控区不小于 44px', brandLinkTouchTarget],
 ];
 /* 这三项依赖最终总数，先算好总数再追加，避免在数组字面量里引用自身。 */
 const totalChecks = checks.length + 3;
