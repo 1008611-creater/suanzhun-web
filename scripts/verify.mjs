@@ -150,7 +150,8 @@ const engineHasLnYears = /function\s+lnYears\s*\(/u.test(readFileSync(resolve(ro
  * 结果页在最高意图时刻原本没有任何下一步动作（整页一个 <a> 都没有）。
  * 这里锁死收尾卡片与联系方式，防止转化入口被删掉。
  */
-const hasNextStepCard = /'wx-id',\s*'ANS_0912'/u.test(appJs) && /复制微信号/u.test(appJs) && /card next/u.test(appJs);
+const hasNextStepCard =
+  /'wx-id',\s*'ANS_0912'/u.test(appJs) && /复制微信号/u.test(appJs) && /card\('下一步',\s*'next'\)/u.test(appJs);
 /* 打印样式与减动效样式现在都由 assets/site.css 单点拥有，页面里不再各自复制。 */
 const hasPrintStyles = /@media print/u.test(siteCss);
 const hasReducedMotion = /prefers-reduced-motion/u.test(siteCss);
@@ -209,6 +210,53 @@ const focusRingOwned =
  */
 const enterSubmits = /addEventListener\(\s*['"]keydown['"]/u.test(appJs) && /bindEnterSubmit/u.test(appJs);
 const enterSkipsComposition = /isComposing/u.test(appJs) && /keyCode\s*===\s*229/u.test(appJs);
+
+/**
+ * 报告在手机上接近一万像素高（12 块卡片），却没有目录也没有回到顶部。
+ * 这里锁死两条导航入口：报告内目录（带锚点）与回到顶部按钮。
+ */
+const hasReportToc =
+  /'toc'/u.test(appJs) && /报告目录/u.test(appJs) && /toc-list/u.test(appJs) && /a\.href\s*=\s*'#'/u.test(appJs);
+const hasBackToTop = /回到顶部/u.test(appJs);
+/**
+ * 「重置」曾经只清掉姓名与日期，出生地仍停在用户上次选的唐山，性别、时制
+ * 与合婚面板也都没复位。这里锁死重置走统一入口且覆盖出生地、合婚面板。
+ */
+/** 取出某个函数的函数体（按大括号配对），只在这个范围内断言，避免误匹配别处的调用。 */
+function functionBody(src, name) {
+  const start = src.indexOf('function ' + name + '(');
+  if (start < 0) return '';
+  const open = src.indexOf('{', start);
+  if (open < 0) return '';
+  let depth = 0;
+  for (let i = open; i < src.length; i++) {
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}') {
+      depth--;
+      if (depth === 0) return src.slice(open, i + 1);
+    }
+  }
+  return '';
+}
+const resetBody = functionBody(appJs, 'resetForm');
+/** 重置必须同时收起「合婚对象」面板与结果区，所以体内至少两处 hidden = true。 */
+const resetHiddenCount = (resetBody.match(/hidden\s*=\s*true/gu) || []).length;
+const resetFullyResets =
+  resetBody.includes('partnerBox') &&
+  /applyDefaultCity\(\)/u.test(resetBody) &&
+  resetHiddenCount >= 2 &&
+  /resetForm\(\)/u.test(appJs);
+/**
+ * prefers-reduced-motion 只关得掉 CSS animation/transition，管不到 JS 的
+ * scrollIntoView。这里锁死滚动行为经由 matchMedia 判断，不再写死 smooth。
+ */
+const scrollHonorsReducedMotion =
+  /prefers-reduced-motion:\s*reduce/u.test(appJs) &&
+  /matchMedia/u.test(appJs) &&
+  /function\s+scrollToEl/u.test(appJs) &&
+  /behavior:\s*scrollBehavior\(\)/u.test(appJs) &&
+  /\?\s*'auto'\s*:\s*'smooth'/u.test(functionBody(appJs, 'scrollBehavior')) &&
+  !/scrollIntoView\(\{\s*behavior:\s*'smooth'/u.test(appJs);
 
 /**
  * 可读名称：表单控件已有专门检查，这里补上链接与按钮——
@@ -364,6 +412,9 @@ const checks = [
   ['.nvmrc 与 package.json engines 主版本一致', nvmrcMatchesEngines],
   ['填完表单按回车可提交', enterSubmits],
   ['回车提交跳过输入法合成中的按键', enterSkipsComposition],
+  ['报告有目录与回到顶部入口', hasReportToc && hasBackToTop],
+  ['重置回到初始状态（含出生地与合婚面板）', resetFullyResets],
+  ['滚动行为尊重系统减少动效设置', scrollHonorsReducedMotion],
 ];
 /* 这三项依赖最终总数，先算好总数再追加，避免在数组字面量里引用自身。 */
 const totalChecks = checks.length + 3;
