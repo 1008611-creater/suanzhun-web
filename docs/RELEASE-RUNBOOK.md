@@ -100,6 +100,23 @@ cp -a /srv/suanzhun/backups/<时间戳>/. /srv/suanzhun/public/
 
 ## 发布记录
 
+### 2026-09-18 0.15.0 网感纹理、环境漂移与错峰入场
+
+`DESIGN.md` 的 Motion 段写了「网感纹理」与「环境星座漂移」，`docs/IMPECCABLE-AUDIT.md`
+也把相关动效项标成完成，但 `assets/site.css` 里实际只有一条 `fadeUp`，全仓没有任何纹理实现。
+这一版把承诺补齐，并把它们变成可执行的闸门。CSP 是 `img-src 'self'`，外链纹理图与
+data-URI 都会被挡，所以纹理层用纯 CSS 渐变实现，不放宽 CSP、不加额外请求。
+
+| 项目     | 值                                                                                                                                                                                                       |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 备份     | `/srv/suanzhun/backups/20260918-100338`                                                                                                                                                                  |
+| 变更文件 | `index.html` `paipan.html` `assets/site.css` `app.js`（其余 15 个文件哈希一致，未上传）                                                                                                                  |
+| 改动     | `body::before` 纯 CSS 纸面纹理；`body::after` 环境漂移（只改 transform/opacity）；`.stagger` 错峰入场；减少动效停漂移并清零延迟；打印隐藏两层；新增 ADR 0013                                             |
+| 发布前   | `npm run release:check` 通过：lint + 格式 + 密钥扫描 + 63 项契约 + 对比度契约 + 49 项测试                                                                                                                |
+| 发布后   | 19 个文件哈希复核一致，18 个地址全部 200                                                                                                                                                                 |
+| 复核     | 线上纹理 `position: fixed` 且 `z-index: -1`、漂移 `ambientDrift 84s`、首页 5 处 `.reveal` / 3 处 `.stagger`、报告 13 卡且目录 12 条、桌面与 375px 溢出 0、减少动效下 `animation: none`、回归全绿、0 报错 |
+| 反向验证 | 删掉 `@keyframes ambientDrift` 与减少动效里的 `animation: none`，以及删掉 `body::before` 与打印隐藏规则，`npm run check` 均以非零码退出并点名对应契约                                                    |
+
 ### 2026-09-18 0.14.0 报告目录、重置完整性与减少动效滚动
 
 真实浏览器审计线上排盘页发现三处问题：报告 12 块卡片、桌面约 6800px、手机约 9500px
