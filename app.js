@@ -181,6 +181,9 @@
   function render(p) {
     var box = $('result');
     box.setAttribute('aria-busy', 'true');
+    /* 报告卡片错峰上浮：样式由 assets/site.css 的 .stagger 提供，
+       这里只切类名，页面里不写内联样式（CSP style-src self）。 */
+    box.classList.add('stagger');
     box.innerHTML = '';
     box.hidden = false;
     var ce = $('canvasEmpty');

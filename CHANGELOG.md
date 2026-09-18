@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.15.0 - 2026-09-18
+
+### 网感纹理、环境漂移与错峰入场
+
+`DESIGN.md` 早就写了「网感纹理」与「环境星座漂移」，`docs/IMPECCABLE-AUDIT.md`
+也把相关动效项标成完成，但代码里只有一条 `fadeUp`，纹理更是全仓没有任何实现——
+文档与实现各说各话。这一版把承诺补齐，并把它们变成可执行的闸门。
+
+- **纸面网感纹理。** `body::before` 用 `radial-gradient` 颗粒 + `repeating-linear-gradient`
+  细斜纹叠出纸面质感。CSP 是 `img-src 'self'`，外链纹理图与 data-URI 都会被挡，
+  所以整层纯 CSS，零额外请求、零字节资源，也不放宽 CSP。
+- **环境漂移。** `body::after` 是一层缓慢移动的星座点阵，只改 `transform` 与 `opacity`，
+  不做 blur、不改尺寸，元素比视口大一圈，漂移时不露边。两层都是 `z-index: -1` +
+  `pointer-events: none`，只做装饰。
+- **错峰入场。** 新增 `.stagger`，首页能力清单、价格表、步骤、排盘表单与报告卡片
+  按 `nth-child` 依次上浮，最后一档 360ms。
+- **减少动效与打印都显式处理。** `prefers-reduced-motion: reduce` 下漂移停住、
+  入场延迟清零（否则「先隐形再跳出」比动画本身更刺眼）；`@media print` 下两层直接隐藏。
+- **新增闸门。** `scripts/verify.mjs` 新增 4 项契约（纹理层为纯 CSS 渐变、漂移动效存在、
+  两者尊重减少动效、打印隐藏），契约数 59 → 63；README 与 ADR 0013 同步。
+
 ## 0.14.0 - 2026-09-18
 
 ### 报告目录、重置完整性与减少动效滚动
