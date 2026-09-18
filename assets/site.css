@@ -509,6 +509,57 @@ button {
 .canvas .card:first-child {
   margin-top: 0;
 }
+/* 报告内目录：手机上报告近一万像素高，没有目录只能一路滚。
+   放在报告最前面，与卡片同宽，点一条跳到对应卡片。 */
+.toc {
+  margin-top: 0;
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background-color: var(--card2);
+}
+.toc-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  color: var(--gold2);
+}
+.toc-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  margin: var(--s-3) 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: toc;
+}
+.toc-list li {
+  counter-increment: toc;
+}
+.toc-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 44px;
+  min-width: 44px;
+  color: var(--dim);
+  font-size: 13px;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition:
+    color var(--d-fast),
+    border-color var(--d-fast);
+}
+.toc-list a::before {
+  content: counter(toc, decimal-leading-zero);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--dim2);
+}
+.toc-list a:hover {
+  color: var(--gold2);
+  border-bottom-color: var(--gold2);
+}
 /* 待排盘空状态：宽屏右侧不再是一块空白，先讲清楚会产出什么。 */
 .canvas-empty {
   position: relative;
@@ -1257,6 +1308,7 @@ tr.now td {
   .masthead,
   .rail,
   .cta-row,
+  .toc,
   .card.next {
     display: none !important;
   }

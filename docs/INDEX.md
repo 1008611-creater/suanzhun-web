@@ -42,6 +42,7 @@ README.md
 | `adr/0009-icon-family-and-pwa-manifest.md`            | 图标族与 PWA 清单单归属                              |
 | `adr/0010-focus-visibility-and-performance-budget.md` | 键盘焦点可见性与首屏性能预算                         |
 | `adr/0011-enter-key-submits-form.md`                  | 回车键提交排盘表单与输入法兼容                       |
+| `adr/0012-report-navigation-reset-and-motion.md`      | 报告目录、重置完整性与滚动动效                       |
 | `adr/README.md`                                       | ADR 编号与只增不改约定                               |
 
 ## 权威来源（不要重复维护）

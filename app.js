@@ -90,10 +90,33 @@
     return n < 10 ? '0' + n : '' + n;
   }
 
+  /* 系统开启「减少动态效果」时，CSS 只能关掉 animation/transition，管不到
+     JS 触发的 scrollIntoView / scrollTo。这里收成一个入口，三处滚动都走它。 */
+  function prefersReducedMotion() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  function scrollBehavior() {
+    return prefersReducedMotion() ? 'auto' : 'smooth';
+  }
+  function scrollToEl(node, block) {
+    if (!node || !node.scrollIntoView) return;
+    node.scrollIntoView({ behavior: scrollBehavior(), block: block || 'start' });
+  }
+
   /* ---------- 初始化表单 ---------- */
   var $ = function (id) {
     return document.getElementById(id);
   };
+  /* 出生地默认值只在这里定义一次，初始化与「重置」共用；
+     否则重置后城市会停在用户上次选的地方，看起来像没重置干净。 */
+  var CITY_DEFAULT = 0;
+  function applyDefaultCity() {
+    var sel = $('city');
+    if (!sel) return;
+    sel.value = String(CITY_DEFAULT);
+    var c = CITY[CITY_DEFAULT];
+    if (c && c[1] !== null) $('lng').value = c[1];
+  }
   (function initCity() {
     var sel = $('city');
     var ph = document.createElement('option');
@@ -106,12 +129,10 @@
       o.textContent = c[0];
       sel.appendChild(o);
     });
-    var defIdx = 0;
     CITY.forEach(function (c, i) {
-      if (c[0] === '北京') defIdx = i;
+      if (c[0] === '北京') CITY_DEFAULT = i;
     });
-    sel.value = String(defIdx);
-    if (CITY[defIdx][1] !== null) $('lng').value = CITY[defIdx][1];
+    applyDefaultCity();
     sel.addEventListener('change', function () {
       var c = CITY[sel.value];
       if (!c) return;
@@ -164,10 +185,21 @@
     box.hidden = false;
     var ce = $('canvasEmpty');
     if (ce) ce.hidden = true;
+    var tocItems = [];
+    /* 报告在手机上接近一万像素高，却没有任何目录。这里给每块卡片编号，
+       渲染结束后统一生成顶部目录，用户可以直接跳到关心的那一段。 */
+    function card(title, extraCls) {
+      var c = el('div', 'card' + (extraCls ? ' ' + extraCls : ''));
+      var secId = 'sec' + (tocItems.length + 1);
+      c.id = secId;
+      var h = el('h2', null, title);
+      c.appendChild(h);
+      tocItems.push({ id: secId, title: title });
+      return c;
+    }
 
     /* --- 1. 基本信息 --- */
-    var c1 = el('div', 'card');
-    c1.appendChild(el('h2', null, '命主基本信息'));
+    var c1 = card('命主基本信息');
     var g = el('div', 'grid2');
     var left = el('div'),
       right = el('div');
@@ -194,8 +226,7 @@
     box.appendChild(c1);
 
     /* --- 2. 四柱 --- */
-    var c2 = el('div', 'card');
-    c2.appendChild(el('h2', null, '四柱八字'));
+    var c2 = card('四柱八字');
     var pil = el('div', 'pillars');
     var POS = ['年柱', '月柱', '日柱', '时柱'];
     var ssList = [p.shiShen.year, p.shiShen.month, '日主', p.shiShen.hour];
@@ -244,8 +275,7 @@
     box.appendChild(c2);
 
     /* --- 3. 五行力量 --- */
-    var c3 = el('div', 'card');
-    c3.appendChild(el('h2', null, '五行力量与旺衰'));
+    var c3 = card('五行力量与旺衰');
     var ws = p.ws;
     var total = 0;
     ['木', '火', '土', '金', '水'].forEach(function (w) {
@@ -305,8 +335,7 @@
     box.appendChild(c3);
 
     /* --- 4. 大运 --- */
-    var c4 = el('div', 'card');
-    c4.appendChild(el('h2', null, '大运'));
+    var c4 = card('大运');
     var nowYear = new Date().getFullYear();
     var dy = p.daYun;
     var t = el('table');
@@ -353,11 +382,10 @@
     box.appendChild(c4);
 
     /* --- 5. 流年 --- */
-    var c5 = el('div', 'card');
     // 流年窗口必须跟着当前年份走。写死年份会让早年生人的表整块空白。
     var lnStart = nowYear,
       lnEnd = nowYear + 9;
-    c5.appendChild(el('h2', null, '流年运势（' + lnStart + ' – ' + lnEnd + '）'));
+    var c5 = card('流年运势（' + lnStart + ' – ' + lnEnd + '）');
     var t2 = el('table');
     var h2 = '<tr><th>年份</th><th>干支</th><th>十神</th><th>虚岁</th><th>吉凶</th><th>简评</th></tr>';
     var LN_MEAN = {
@@ -406,8 +434,7 @@
     box.appendChild(c5);
 
     /* --- 6. 命卦与八宅 --- */
-    var c6 = el('div', 'card');
-    c6.appendChild(el('h2', null, '命卦与八宅风水'));
+    var c6 = card('命卦与八宅风水');
     var top = el('div', 'grid2');
     top.innerHTML =
       '<div>' +
@@ -479,8 +506,7 @@
 
     /* --- 6b. 八宅落地布局：把吉凶方位翻译成家具与功能区位置 --- */
     var lp = A.layoutPlan(p.bazhai, ws);
-    var c6b = el('div', 'card');
-    c6b.appendChild(el('h2', null, '八宅落地布局'));
+    var c6b = card('八宅落地布局');
     var lpg = el('div', 'grid2');
     lpg.innerHTML =
       '<div>' +
@@ -529,8 +555,7 @@
 
     /* --- 6c. 事业与财运方向：十神结构 + 大运阶段 --- */
     var ca = A.career(p, nowYear);
-    var c6c = el('div', 'card');
-    c6c.appendChild(el('h2', null, '事业与财运方向'));
+    var c6c = card('事业与财运方向');
     var cag = el('div', 'grid2');
     cag.innerHTML =
       '<div>' +
@@ -595,8 +620,7 @@
 
     /* --- 6d. 婚姻与感情：配偶宫 + 配偶星 + 流年应期 --- */
     var ma = A.marriage(p, nowYear);
-    var c6d = el('div', 'card');
-    c6d.appendChild(el('h2', null, '婚姻与感情'));
+    var c6d = card('婚姻与感情');
     var mag = el('div', 'grid2');
     mag.innerHTML =
       '<div>' +
@@ -664,8 +688,7 @@
     box.appendChild(c6d);
 
     /* --- 7. 姓名 --- */
-    var c7 = el('div', 'card');
-    c7.appendChild(el('h2', null, '姓名五格分析'));
+    var c7 = card('姓名五格分析');
     var n5 = p.name5;
     if (!n5.ok) {
       c7.appendChild(
@@ -721,8 +744,7 @@
 
     /* --- 7b. 姓名优选：不动姓，只枚举「改中间字 / 改末字」的笔画候选 --- */
     var na = A.nameAdvise(p.name, ws);
-    var c7b = el('div', 'card');
-    c7b.appendChild(el('h2', null, '姓名优选建议'));
+    var c7b = card('姓名优选建议');
     if (!na.ok) {
       c7b.appendChild(el('div', 'note', '无法给出改名建议：' + esc(na.reason || '字形未收录') + '。'));
     } else {
@@ -821,8 +843,7 @@
 
     /* --- 8. 合婚 --- */
     if (p.partner) {
-      var c8 = el('div', 'card');
-      c8.appendChild(el('h2', null, '合婚分析'));
+      var c8 = card('合婚分析');
       var he = A.hehun(p, p.partner);
       var hbox = el('div', 'grid2');
       hbox.innerHTML =
@@ -856,8 +877,7 @@
     /* --- 9. 下一步：把「看完就走」接成可保存、可联系 --- */
     // 结果页原先在最后一块分析后直接进页脚，用户没有任何下一步动作。
     // 这里补上保存（打印）与联系方式，对应 PRD 核心路径第 5 步。
-    var cNext = el('div', 'card next');
-    cNext.appendChild(el('h2', null, '下一步'));
+    var cNext = card('下一步', 'next');
     cNext.appendChild(
       el(
         'p',
@@ -897,6 +917,14 @@
     bPrint.addEventListener('click', function () {
       window.print();
     });
+    var bTop = document.createElement('button');
+    bTop.type = 'button';
+    bTop.className = 'btn-ghost';
+    bTop.textContent = '回到顶部';
+    bTop.addEventListener('click', function () {
+      scrollToEl(box, 'start');
+      box.focus({ preventScroll: true });
+    });
     var bBack = document.createElement('button');
     bBack.type = 'button';
     bBack.className = 'btn-ghost';
@@ -904,16 +932,42 @@
     bBack.addEventListener('click', function () {
       var nameEl = $('name');
       if (nameEl) {
-        nameEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        scrollToEl(nameEl, 'center');
         nameEl.focus({ preventScroll: true });
       }
     });
     nbtns.appendChild(bPrint);
+    nbtns.appendChild(bTop);
     nbtns.appendChild(bBack);
     cNext.appendChild(nbtns);
     box.appendChild(cNext);
 
-    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    /* --- 报告内目录：12 块卡片、手机上近一万像素，没有目录只能一路滚。
+       目录放在报告最前面，点一条跳到对应卡片。 --- */
+    var toc = el('nav', 'toc');
+    toc.setAttribute('aria-label', '报告目录');
+    toc.appendChild(el('div', 'toc-title', '报告目录'));
+    var tocList = el('ol', 'toc-list');
+    tocItems.forEach(function (item) {
+      var li = document.createElement('li');
+      var a = document.createElement('a');
+      a.href = '#' + item.id;
+      a.textContent = item.title;
+      a.addEventListener('click', function (e) {
+        var target = $(item.id);
+        if (!target) return;
+        e.preventDefault();
+        scrollToEl(target, 'start');
+        target.setAttribute('tabindex', '-1');
+        target.focus({ preventScroll: true });
+      });
+      li.appendChild(a);
+      tocList.appendChild(li);
+    });
+    toc.appendChild(tocList);
+    box.insertBefore(toc, box.firstChild);
+
+    scrollToEl(box, 'start');
     box.setAttribute('aria-busy', 'false');
     /* 键盘用户点完「开始排盘」后，焦点原本还留在按钮上，得手动往下翻才能到报告。
        把焦点移到结果区，读屏会从报告开头播报，Tab 也会继续在报告内走。 */
@@ -967,19 +1021,33 @@
     });
   }
   Array.prototype.forEach.call(document.querySelectorAll('.form'), bindEnterSubmit);
-  $('reset').addEventListener('click', function () {
+  /* 重置要回到「刚打开页面」的状态，而不是只清掉几个字段。
+     原先漏了出生地、两个性别与两个时制，也忘了收起合婚对象面板，
+     用户看到的仍是上次选的唐山，会以为按钮坏了。 */
+  function resetForm() {
     clearFormAlert();
     $('name').value = '';
     $('date').value = '';
     $('time').value = '';
+    $('gender').value = '男';
+    $('ts').value = '1';
+    applyDefaultCity();
     $('p_name').value = '';
     $('p_date').value = '';
     $('p_time').value = '';
     $('p_lng').value = '';
-    $('result').hidden = true;
-    $('result').innerHTML = '';
+    $('p_gender').value = '女';
+    $('p_ts').value = '1';
+    var pb = document.getElementById('partnerBox');
+    if (pb) pb.hidden = true;
+    var res = $('result');
+    res.hidden = true;
+    res.innerHTML = '';
     var ce = $('canvasEmpty');
     if (ce) ce.hidden = false;
+  }
+  $('reset').addEventListener('click', function () {
+    resetForm();
   });
   $('demo').addEventListener('click', function () {
     var b = document.getElementById('partnerBox');
