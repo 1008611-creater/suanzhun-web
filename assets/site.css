@@ -1275,11 +1275,74 @@ tr.now td {
   }
 }
 
-/* ============ 15. 动效 ============ */
+/* ============ 15. 纹理与动效 ============ */
+/* 15.1 网感纹理：纸面颗粒与细斜纹全部由 CSS 渐变叠出。
+   CSP 是 img-src 'self'，外链纹理图与 data-URI 都会被挡，所以这一层不引任何图片。
+   层压在内容之下（z-index:-1），只做装饰，不吃点击。 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(oklch(45% 0.06 350 / 0.055) 0.6px, transparent 1.2px),
+    repeating-linear-gradient(135deg, oklch(50% 0.05 350 / 0.022) 0 1px, transparent 1px 6px),
+    radial-gradient(1200px 620px at 50% -12%, oklch(96% 0.045 350 / 0.45), transparent 72%);
+  background-size:
+    4px 4px,
+    auto,
+    auto;
+}
+/* 15.2 环境漂移：一层缓慢移动的星座点阵，只改 transform 与 opacity，
+   不做 blur、不触发重排。元素比视口大一圈，漂移时不会露边。 */
+body::after {
+  content: '';
+  position: fixed;
+  top: -8vh;
+  left: -8vw;
+  width: 116vw;
+  height: 116vh;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.7;
+  background-image:
+    radial-gradient(circle at 18% 24%, oklch(50% 0.15 350 / 0.18) 0 2px, transparent 3px),
+    radial-gradient(circle at 72% 12%, oklch(68% 0.12 20 / 0.16) 0 1.6px, transparent 2.6px),
+    radial-gradient(circle at 40% 68%, oklch(50% 0.15 350 / 0.14) 0 1.8px, transparent 2.8px),
+    radial-gradient(circle at 88% 58%, oklch(60% 0.09 165 / 0.13) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 12% 82%, oklch(68% 0.12 20 / 0.13) 0 1.6px, transparent 2.6px),
+    radial-gradient(circle at 58% 40%, oklch(50% 0.15 350 / 0.11) 0 1.4px, transparent 2.4px);
+  background-size:
+    42vw 40vh,
+    55vw 46vh,
+    48vw 52vh,
+    61vw 44vh,
+    52vw 50vh,
+    66vw 58vh;
+  background-repeat: repeat;
+  animation: ambientDrift 84s var(--ease-in-out) infinite alternate;
+}
+@keyframes ambientDrift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(-2.4vw, 1.6vh, 0) scale(1.03);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(-4vw, -1.2vh, 0) scale(1.06);
+    opacity: 0.6;
+  }
+}
+
+/* 15.3 入场：首屏与排盘页按区块错峰上浮，最后一档不超过 500ms。 */
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -1289,13 +1352,45 @@ tr.now td {
 .reveal {
   animation: fadeUp var(--d-slow) var(--ease-out) both;
 }
+.stagger > * {
+  animation: fadeUp var(--d-slow) var(--ease-out) both;
+}
+.stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 60ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 120ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 180ms;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 240ms;
+}
+.stagger > *:nth-child(6) {
+  animation-delay: 300ms;
+}
+.stagger > *:nth-child(n + 7) {
+  animation-delay: 360ms;
+}
+
+/* 15.4 减少动效：纹理保持静止，入场直接到位且不排队等待。
+   animation-delay 也必须清零，否则「先隐形再跳出」比动画本身更刺眼。 */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  body::after {
+    animation: none !important;
+    opacity: 0.5;
   }
 }
 
@@ -1304,6 +1399,17 @@ tr.now td {
   body {
     background: #fff;
     color: #000;
+  }
+  /* 纹理与环境漂移是屏幕装饰，打印时全部撤掉，避免纸面发灰。 */
+  body::before,
+  body::after {
+    display: none !important;
+  }
+  .reveal,
+  .stagger > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
   .masthead,
   .rail,

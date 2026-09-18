@@ -155,6 +155,38 @@ const hasNextStepCard =
 /* 打印样式与减动效样式现在都由 assets/site.css 单点拥有，页面里不再各自复制。 */
 const hasPrintStyles = /@media print/u.test(siteCss);
 const hasReducedMotion = /prefers-reduced-motion/u.test(siteCss);
+/** 取出一个 CSS 块（从匹配到的 '{' 起按大括号配对），用于在 media 查询内部断言。 */
+function cssBlock(src, headerPattern) {
+  const m = src.match(headerPattern);
+  if (!m) return '';
+  const open = src.indexOf('{', m.index);
+  if (open < 0) return '';
+  let depth = 0;
+  for (let i = open; i < src.length; i++) {
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}') {
+      depth--;
+      if (depth === 0) return src.slice(open, i + 1);
+    }
+  }
+  return '';
+}
+/**
+ * DESIGN.md 承诺了「网感纹理」与「环境星座漂移」，但代码里长期只有一条 fadeUp，
+ * 文档与实现各说各话。这里锁死四件事：纹理层存在、漂移动效存在、
+ * 两者都尊重系统减少动效、打印时撤掉纹理。
+ * 纹理必须是纯 CSS 渐变——CSP 是 img-src 'self'，外链图与 data-URI 都会被挡。
+ */
+const reducedMotionCss = cssBlock(siteCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)/u);
+const printCss = cssBlock(siteCss, /@media\s+print/u);
+const hasTextureLayer = /body::before\s*\{/u.test(siteCss) && /radial-gradient/u.test(siteCss);
+const hasAmbientDrift = /@keyframes\s+ambientDrift\s*\{/u.test(siteCss) && /body::after\s*\{/u.test(siteCss);
+const motionRespectsReducedMotion =
+  /animation:\s*none\s*!important/u.test(reducedMotionCss) &&
+  /animation-delay:\s*0ms\s*!important/u.test(reducedMotionCss);
+const textureHiddenInPrint = /body::before[\s\S]{0,80}?body::after\s*\{[\s\S]*?display:\s*none\s*!important/u.test(
+  printCss
+);
 /* 样式与脚本都不能内联：CSP 的 style-src/script-src 都是 'self'。 */
 const hasNoInlineStyle = !/<style\b/iu.test(home + paipan) && !/\sstyle\s*=/iu.test(home + paipan);
 const pagesLinkTokens = /assets\/tokens\.css/u.test(home) && /assets\/tokens\.css/u.test(paipan);
@@ -415,6 +447,10 @@ const checks = [
   ['报告有目录与回到顶部入口', hasReportToc && hasBackToTop],
   ['重置回到初始状态（含出生地与合婚面板）', resetFullyResets],
   ['滚动行为尊重系统减少动效设置', scrollHonorsReducedMotion],
+  ['纸面网感纹理层存在且为纯 CSS 渐变', hasTextureLayer],
+  ['环境漂移动效存在', hasAmbientDrift],
+  ['纹理与漂移都尊重系统减少动效设置', motionRespectsReducedMotion],
+  ['打印时撤掉纹理与漂移层', textureHiddenInPrint],
 ];
 /* 这三项依赖最终总数，先算好总数再追加，避免在数组字面量里引用自身。 */
 const totalChecks = checks.length + 3;

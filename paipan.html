@@ -35,14 +35,14 @@
 
   <div class="workbench">
 
-    <section class="rail" aria-labelledby="rail-title">
+    <section class="rail reveal" aria-labelledby="rail-title">
       <h1 id="rail-title">命理排盘</h1>
       <p class="rail-sub">八字 · 真太阳时 · 大运流年 · 八宅命卦 · 姓名五格</p>
       <div class="rail-rule" aria-hidden="true"></div>
 
       <div class="card">
         <h2>命主信息</h2>
-        <div class="form">
+        <div class="form stagger">
           <div class="f"><label for="name">姓名</label><input id="name" placeholder="请输入姓名" autocomplete="off"></div>
           <div class="f"><label for="gender">性别</label><select id="gender"><option>男</option><option>女</option></select></div>
           <div class="f"><label for="date">出生日期（公历）</label><input id="date" type="date"></div>
@@ -74,12 +74,12 @@
       </div>
     </section>
 
-    <section class="canvas" aria-label="排盘报告">
+    <section class="canvas reveal" aria-label="排盘报告">
       <div class="canvas-empty" id="canvasEmpty">
         <div class="canvas-seal" aria-hidden="true">盘</div>
         <p class="canvas-empty-title">报告区 · 待排盘</p>
         <p class="canvas-empty-desc">在左侧填好姓名、出生日期与出生时间，点「开始排盘」。四柱八字、五行旺衰、大运流年、八宅命卦、姓名五格和合婚都会按顺序出现在这里。</p>
-        <ol class="canvas-empty-list">
+        <ol class="canvas-empty-list stagger">
           <li><span>01</span>命主基本信息</li>
           <li><span>02</span>四柱与十神</li>
           <li><span>03</span>五行旺衰与用忌神</li>
