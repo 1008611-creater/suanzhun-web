@@ -952,6 +952,21 @@
     render(p);
   }
   $('go').addEventListener('click', run);
+
+  /* 键盘习惯：填完最后一个字段顺手按回车应当提交。页面用的是 <div class="form">
+     而不是原生 <form>，不接住回车的话按下去毫无反应。中文输入法用回车确认候选词，
+     所以必须跳过合成中的按键（isComposing / keyCode 229），否则打字打一半就排盘了。 */
+  function bindEnterSubmit(formEl) {
+    if (!formEl) return;
+    formEl.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+      var t = e.target;
+      if (!t || t.tagName === 'BUTTON' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') return;
+      e.preventDefault();
+      run();
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.form'), bindEnterSubmit);
   $('reset').addEventListener('click', function () {
     clearFormAlert();
     $('name').value = '';
