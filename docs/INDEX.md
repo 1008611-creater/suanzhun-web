@@ -41,6 +41,7 @@ README.md
 | `adr/0008-doc-numbers-locked-to-code.md`              | 文档里的契约数与上线文件数与代码锁死                 |
 | `adr/0009-icon-family-and-pwa-manifest.md`            | 图标族与 PWA 清单单归属                              |
 | `adr/0010-focus-visibility-and-performance-budget.md` | 键盘焦点可见性与首屏性能预算                         |
+| `adr/0011-enter-key-submits-form.md`                  | 回车键提交排盘表单与输入法兼容                       |
 | `adr/README.md`                                       | ADR 编号与只增不改约定                               |
 
 ## 权威来源（不要重复维护）

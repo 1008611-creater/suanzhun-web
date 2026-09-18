@@ -203,6 +203,14 @@ const focusRingOwned =
   /:focus-visible\s*\{/u.test(siteCss) && !/outline\s*:\s*none/iu.test(stripCssComments(siteCss + tokensCss));
 
 /**
+ * 表单不是原生 <form>，填完最后一个字段按回车曾经毫无反应。
+ * 这里锁死「回车提交」监听存在，且跳过输入法合成中的按键——
+ * 中文输入用回车确认候选词，不跳过的话打字打一半就会触发排盘。
+ */
+const enterSubmits = /addEventListener\(\s*['"]keydown['"]/u.test(appJs) && /bindEnterSubmit/u.test(appJs);
+const enterSkipsComposition = /isComposing/u.test(appJs) && /keyCode\s*===\s*229/u.test(appJs);
+
+/**
  * 可读名称：表单控件已有专门检查，这里补上链接与按钮——
  * 只有图标没有文字、又没有 aria-label 的控件，读屏软件只会念出「按钮」。
  */
@@ -354,6 +362,8 @@ const checks = [
   ['首屏关键资源 gzip 预算内', criticalGz <= CRITICAL_BUDGET],
   ['脚本总量 gzip 预算内', scriptGz <= SCRIPT_BUDGET],
   ['.nvmrc 与 package.json engines 主版本一致', nvmrcMatchesEngines],
+  ['填完表单按回车可提交', enterSubmits],
+  ['回车提交跳过输入法合成中的按键', enterSkipsComposition],
 ];
 /* 这三项依赖最终总数，先算好总数再追加，避免在数组字面量里引用自身。 */
 const totalChecks = checks.length + 3;
